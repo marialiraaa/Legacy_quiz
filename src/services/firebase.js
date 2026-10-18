@@ -1,0 +1,34 @@
+import { initializeApp } from "firebase/app";
+import { getFirestore } from "firebase/firestore";
+import { getStorage } from "firebase/storage";
+import { getAnalytics, isSupported } from "firebase/analytics";
+
+// Configuração do Firebase utilizando variáveis de ambiente do Vite
+const firebaseConfig = {
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
+};
+
+// Inicialização da instância do Firebase
+const app = initializeApp(firebaseConfig);
+
+// Inicialização dos serviços necessários
+export const db = getFirestore(app);
+export const storage = getStorage(app);
+
+// Inicialização opcional do Analytics apenas se suportado no navegador
+export let analytics = null;
+if (typeof window !== "undefined") {
+  isSupported().then((supported) => {
+    if (supported) {
+      analytics = getAnalytics(app);
+    }
+  });
+}
+
+export default app;

@@ -1,0 +1,34 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Regras da coleção 'jogadores'
+    match /jogadores/{jogadorId} {
+
+      // Leitura totalmente pública para renderizar o ranking
+      allow read: if true;
+
+      // Criação permitida ao público com validações estritas:
+      // 1. Evita nicknames duplicados: não permite sobrescrever se o documento já existir
+      // 2. Valida que contenha estritamente os campos: nickname, assinaturaUrl, pontuacao, tempoSegundos
+      allow create: if (resource == null && !exists(/databases/$(database)/documents/jogadores/$(jogadorId)))
+                    && request.resource.data.keys().hasAll(['nickname', 'assinaturaUrl', 'pontuacao', 'tempoSegundos'])
+                    && request.resource.data.keys().hasOnly(['nickname', 'assinaturaUrl', 'pontuacao', 'tempoSegundos'])
+                    && request.resource.data.nickname is string
+                    && request.resource.data.nickname.size() > 0
+                    && request.resource.data.assinaturaUrl is string
+                    && request.resource.data.pontuacao is number
+                    && request.resource.data.tempoSegundos is number
+                    && request.resource.data.tempoSegundos > 0;
+
+      // Atualização e Exclusão totalmente bloqueadas (ninguém pode alterar ou deletar)
+      allow update, delete: if false;
+    }
+
+    // Bloqueia qualquer outra coleção não mapeada explicitamente
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

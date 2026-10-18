@@ -1,0 +1,19 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "jogadores",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "pontuacao",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "tempoSegundos",
+          "order": "ASCENDING"
+        }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}

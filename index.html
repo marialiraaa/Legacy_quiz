@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Legacy Quiz - Memória, Finitude e Legado Digital</title>
+  <meta name="description" content="Aplicação interativa em React baseada no protocolo de pesquisa sobre conscientização de identidade e legado digital.">
+  <meta name="theme-color" content="#1b2858">
+  
+  <!-- Favicon icon -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧠</text></svg>">
+
+  <!-- Design System CSS -->
+  <link rel="stylesheet" href="/src/styles/index.css">
+</head>
+<body>
+  <div id="root">
+    <!-- Fallback loader while React mounts -->
+    <div style="min-height: 100vh; display: flex; align-items: center; justify-content: center; font-family: sans-serif; color: #1c2a5e;">
+      <div style="text-align: center;">
+        <div style="font-size: 3rem; margin-bottom: 12px; animation: pulse 1.5s infinite;">🧠</div>
+        <h2 style="font-weight: 800;">Carregando Legacy Quiz...</h2>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="/src/main.jsx"></script>
+
+  <style>
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.15); opacity: 0.8; }
+    }
+  </style>
+</body>
+</html>

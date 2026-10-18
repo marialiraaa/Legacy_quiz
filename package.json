@@ -1,0 +1,22 @@
+{
+  "name": "quiz-legado",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Legacy Quiz - Aplicação React interativa sobre Memória, Finitude e Legado Digital",
+  "scripts": {
+    "start": "vite",
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "firebase": "^10.13.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.1",
+    "vite": "^5.4.2"
+  }
+}
