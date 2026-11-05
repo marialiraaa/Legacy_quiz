@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { QUIZ_QUESTIONS } from '../data/questions.js';
 import { LightbulbRaysIcon } from './FeedbackView.jsx';
 
-export function ReviewModal({ userAnswers, onClose, playClick }) {
+export function ReviewModal({ userAnswers, onClose, playClick, onFilterChange }) {
   const [filter, setFilter] = useState('ALL'); // 'ALL' | 'CORRECT' | 'INCORRECT'
 
   const filteredQuestions = QUIZ_QUESTIONS.filter(q => {
@@ -50,6 +50,7 @@ export function ReviewModal({ userAnswers, onClose, playClick }) {
               onClick={() => {
                 playClick?.();
                 setFilter(tab.id);
+                onFilterChange?.(tab.id);
               }}
               style={{
                 padding: '8px 16px',

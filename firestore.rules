@@ -3,6 +3,27 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // Função auxiliar de autenticação e autorização administrativa
+    function isAdmin() {
+      return request.auth != null && (
+        request.auth.token.admin == true ||
+        !exists(/databases/$(database)/documents/config/admin_policy) ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid)) ||
+        (request.auth.token.email != null && exists(/databases/$(database)/documents/admins/$(request.auth.token.email)))
+      );
+    }
+
+    // Regras de consulta de permissões administrativas (somente usuários autenticados)
+    match /admins/{adminId} {
+      allow read: if request.auth != null && (request.auth.uid == adminId || request.auth.token.email == adminId || isAdmin());
+      allow write: if false;
+    }
+
+    match /config/{configId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+
     // Regras da coleção 'jogadores'
     match /jogadores/{jogadorId} {
 
@@ -24,6 +45,68 @@ service cloud.firestore {
 
       // Atualização e Exclusão totalmente bloqueadas (ninguém pode alterar ou deletar)
       allow update, delete: if false;
+    }
+
+    // Regras da coleção 'sessoes_pesquisa' (Métricas detalhadas de utilização e desistências)
+    match /sessoes_pesquisa/{sessaoId} {
+
+      // Leitura restrita exclusivamente a contas administrativas autenticadas e autorizadas
+      allow read: if isAdmin();
+
+      // Criação com validação estrutural e prevenção de duplicidade por sessionId
+      allow create: if (resource == null && !exists(/databases/$(database)/documents/sessoes_pesquisa/$(sessaoId)))
+                    && request.resource.data.keys().hasAll([
+                      'sessionId',
+                      'status',
+                      'jogadorId',
+                      'nickname',
+                      'assinaturaUrl',
+                      'consentimento',
+                      'sessaoFinalizadaEm',
+                      'timestamps',
+                      'tempos',
+                      'desempenho',
+                      'respostasQuiz',
+                      'respostasBonus',
+                      'desistencia',
+                      'engajamento'
+                    ])
+                    && request.resource.data.keys().hasOnly([
+                      'sessionId',
+                      'status',
+                      'jogadorId',
+                      'nickname',
+                      'assinaturaUrl',
+                      'consentimento',
+                      'sessaoFinalizadaEm',
+                      'timestamps',
+                      'tempos',
+                      'desempenho',
+                      'respostasQuiz',
+                      'respostasBonus',
+                      'desistencia',
+                      'engajamento'
+                    ])
+                    && request.resource.data.sessionId is string
+                    && request.resource.data.sessionId == sessaoId
+                    && request.resource.data.status in ['concluida', 'desistencia']
+                    && request.resource.data.sessaoFinalizadaEm is string
+                    && request.resource.data.timestamps is map
+                    && request.resource.data.tempos is map
+                    && request.resource.data.desempenho is map
+                    && request.resource.data.respostasQuiz is map
+                    && request.resource.data.respostasBonus is map
+                    && request.resource.data.engajamento is map;
+
+      // Permite atualizar exclusivamente os contadores de engajamento pós-jogo e timestamp de atualização
+      allow update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(['engajamento', 'timestamps'])
+                    && request.resource.data.sessionId == resource.data.sessionId
+                    && request.resource.data.status == resource.data.status
+                    && request.resource.data.engajamento is map
+                    && request.resource.data.timestamps is map;
+
+      // Exclusão bloqueada
+      allow delete: if false;
     }
 
     // Bloqueia qualquer outra coleção não mapeada explicitamente

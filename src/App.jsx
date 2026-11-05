@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { QUIZ_QUESTIONS, BONUS_QUESTIONS } from './data/questions.js';
 import { useAudio } from './hooks/useAudio.js';
 
@@ -17,26 +17,78 @@ import { BonusQuestion } from './components/BonusQuestion.jsx';
 import { CompletionScreen } from './components/CompletionScreen.jsx';
 import { ReviewModal } from './components/ReviewModal.jsx';
 import { RankingModal } from './components/RankingModal.jsx';
+import { AdminDashboard } from './components/AdminDashboard.jsx';
 import { salvarJogador, uploadAssinatura, formatNickname } from './services/jogadorService.js';
+import {
+  gerarSessionId,
+  construirPayloadSessao,
+  salvarSessaoPesquisa,
+  atualizarEngajamentoSessao
+} from './services/metricasService.js';
+
+const createInitialTimestamps = () => ({
+  sessaoIniciadaEm: new Date().toISOString(),
+  avisoConteudoAceitoEm: null,
+  tcleAceitoEm: null,
+  quizIniciadoEm: null,
+  bonusIniciadoEm: null,
+  sessaoFinalizadaEm: null
+});
+
+const createInitialEngajamento = () => ({
+  tentativasSaidaCanceladas: 0,
+  alteracoesAudioMute: 0,
+  abriuRevisaoGabarito: 0,
+  filtrosRevisaoUtilizados: [],
+  abriuRanking: 0,
+  exportouJson: 0
+});
+
+const checkIsAdminRoute = () => {
+  if (typeof window === 'undefined') return false;
+  const path = window.location.pathname.replace(/\/+$/, '');
+  const hash = window.location.hash;
+  return path === '/admin' || hash === '#/admin' || hash === '#admin';
+};
 
 export function App() {
+  // Restricted Admin Route State (not exposed in any public menu)
+  const [isAdminRoute, setIsAdminRoute] = useState(checkIsAdminRoute);
+
+  useEffect(() => {
+    const syncRoute = () => setIsAdminRoute(checkIsAdminRoute());
+    window.addEventListener('popstate', syncRoute);
+    window.addEventListener('hashchange', syncRoute);
+    return () => {
+      window.removeEventListener('popstate', syncRoute);
+      window.removeEventListener('hashchange', syncRoute);
+    };
+  }, []);
+
   // Navigation State
   const [currentScreen, setCurrentScreen] = useState('LANDING'); 
   // 'LANDING' | 'CONTENT_WARNING' | 'NICKNAME' | 'VIDEO_1' | 'VIDEO_2' | 'QUIZ' | 
   // 'BONUS_INTRO' | 'BONUS_QUESTIONS' | 'COMPLETION'
+  const [originScreenBeforeExit, setOriginScreenBeforeExit] = useState('QUIZ');
 
   // Quiz Indexes
   const [currentQuestionIdx, setCurrentQuestionIdx] = useState(0);
   const [currentBonusIdx, setCurrentBonusIdx] = useState(0);
 
-  // Participant Data
+  // Participant & Telemetry Data
+  const [sessionId, setSessionId] = useState(() => gerarSessionId());
   const [nickname, setNickname] = useState('');
   const [consentRecord, setConsentRecord] = useState(null);
-  const [userAnswers, setUserAnswers] = useState({}); // { [qId]: { selectedOpt, isCorrect } }
+  const [userAnswers, setUserAnswers] = useState({}); // { [qId]: { selectedOpt, isCorrect, tempoRespostaMs, respondidaEm } }
   const [bonusAnswers, setBonusAnswers] = useState({});
 
   const [dropoutData, setDropoutData] = useState(null);
-  const [sessionStartTime] = useState(new Date().toISOString());
+  const [sessionTimestamps, setSessionTimestamps] = useState(createInitialTimestamps);
+  const [engajamento, setEngajamento] = useState(createInitialEngajamento);
+
+  // Prevenção de gravação duplicada da mesma sessão
+  const savedCompletionSessionRef = useRef(null);
+  const savedDropoutSessionRef = useRef(null);
 
   // Modals
   const [showExitModal, setShowExitModal] = useState(false);
@@ -44,22 +96,71 @@ export function App() {
   const [showRankingModal, setShowRankingModal] = useState(false);
   const [saveStatus, setSaveStatus] = useState({ loading: false, success: false, error: null });
 
-  // Salva os dados no Firestore e Storage ao atingir a tela final
+  // Helper para registrar e sincronizar interações de engajamento
+  const registrarInteracaoEngajamento = useCallback((updater) => {
+    setEngajamento(prev => {
+      const next = typeof updater === 'function' ? updater(prev) : { ...prev, ...updater };
+      if (
+        savedCompletionSessionRef.current === sessionId ||
+        savedDropoutSessionRef.current === sessionId
+      ) {
+        atualizarEngajamentoSessao(sessionId, next);
+      }
+      return next;
+    });
+  }, [sessionId]);
+
+  // Salva os dados no Firestore (jogadores + sessoes_pesquisa) e Storage ao atingir a tela final
   useEffect(() => {
-    if (currentScreen === 'COMPLETION' && nickname && !saveStatus.success && !saveStatus.loading) {
+    if (
+      currentScreen === 'COMPLETION' &&
+      nickname &&
+      !saveStatus.success &&
+      !saveStatus.loading &&
+      savedCompletionSessionRef.current !== sessionId
+    ) {
+      savedCompletionSessionRef.current = sessionId;
       const salvarDadosFinais = async () => {
         setSaveStatus({ loading: true, success: false, error: null });
-        try {
-          let assinaturaUrl = "assinaturas/sem_assinatura.png";
-          if (consentRecord?.signatureDataUrl) {
-            try {
-              const formattedNick = formatNickname(nickname);
-              assinaturaUrl = await uploadAssinatura(consentRecord.signatureDataUrl, formattedNick);
-            } catch (uploadErr) {
-              console.warn("Aviso ao enviar assinatura para o storage:", uploadErr);
-            }
+        const fimIso = new Date().toISOString();
+        const timestampsFinais = {
+          ...sessionTimestamps,
+          sessaoFinalizadaEm: fimIso
+        };
+        setSessionTimestamps(timestampsFinais);
+
+        let assinaturaUrl = "assinaturas/sem_assinatura.png";
+        if (consentRecord?.signatureDataUrl) {
+          try {
+            const formattedNick = formatNickname(nickname);
+            assinaturaUrl = await uploadAssinatura(consentRecord.signatureDataUrl, formattedNick);
+          } catch (uploadErr) {
+            console.warn("Aviso ao enviar assinatura para o storage:", uploadErr);
           }
-          const tempoSegundos = Math.max(1, Math.round((Date.now() - new Date(sessionStartTime).getTime()) / 1000));
+        }
+
+        // 1. Persiste as métricas detalhadas na coleção 'sessoes_pesquisa' (independente de conflito de nickname no ranking)
+        try {
+          await salvarSessaoPesquisa({
+            sessionId,
+            status: 'concluida',
+            nickname,
+            assinaturaUrl,
+            consentRecord,
+            userAnswers,
+            bonusAnswers,
+            dropoutData: null,
+            timestamps: timestampsFinais,
+            engajamento
+          });
+        } catch (metricsErr) {
+          console.error("Erro ao registrar métricas na coleção sessoes_pesquisa:", metricsErr);
+        }
+
+        // 2. Persiste o registro enxuto na coleção 'jogadores' para o Ranking
+        try {
+          const inicioMs = new Date(timestampsFinais.sessaoIniciadaEm).getTime();
+          const tempoSegundos = Math.max(1, Math.round((Date.now() - inicioMs) / 1000));
           await salvarJogador({
             nickname,
             assinaturaUrl,
@@ -74,10 +175,18 @@ export function App() {
       };
       salvarDadosFinais();
     }
-  }, [currentScreen, nickname]);
+  }, [currentScreen, nickname, sessionId]);
 
   // Audio Hook
-  const { muted, toggleMute, playClick, playCorrect, playIncorrect, playFanfare } = useAudio();
+  const { muted, toggleMute: rawToggleMute, playClick, playCorrect, playIncorrect, playFanfare } = useAudio();
+
+  const toggleMute = useCallback(() => {
+    rawToggleMute();
+    registrarInteracaoEngajamento(prev => ({
+      ...prev,
+      alteracoesAudioMute: prev.alteracoesAudioMute + 1
+    }));
+  }, [rawToggleMute, registrarInteracaoEngajamento]);
 
   // Calculated Score
   const score = useMemo(() => {
@@ -109,28 +218,75 @@ export function App() {
     }
   }, [currentScreen, currentQuestionIdx, currentBonusIdx]);
 
-  // Answer handler for Core Quiz
-  const handleAnswerQuestion = (qId, selectedOpt, isCorrect) => {
+  // Answer handler for Core Quiz (inclui tempo de resposta e timestamp da questão)
+  const handleAnswerQuestion = (qId, selectedOpt, isCorrect, meta = {}) => {
     setUserAnswers(prev => ({
       ...prev,
-      [qId]: { selectedOpt, isCorrect }
+      [qId]: {
+        selectedOpt,
+        isCorrect,
+        tempoRespostaMs: meta.tempoRespostaMs || 0,
+        respondidaEm: meta.respondidaEm || new Date().toISOString()
+      }
     }));
   };
 
-  // Answer handler for Bonus Questions
-  const handleAnswerBonus = (bonusId, selectedOpt) => {
+  // Answer handler for Bonus Questions (inclui tempo de resposta e timestamp)
+  const handleAnswerBonus = (bonusId, selectedOpt, meta = {}) => {
     setBonusAnswers(prev => ({
       ...prev,
-      [bonusId]: selectedOpt
+      [bonusId]: {
+        selectedOpt,
+        tempoRespostaMs: meta.tempoRespostaMs || 0,
+        respondidaEm: meta.respondidaEm || new Date().toISOString()
+      }
     }));
   };
 
-  // Export Study Data as JSON
+  // Handler para solicitar saída preservando a tela de origem
+  const handleRequestExit = () => {
+    setOriginScreenBeforeExit(currentScreen);
+    setShowExitModal(true);
+  };
+
+  // Determina o identificador exato da tela/questão no momento da saída
+  const getScreenExitLabel = (screen) => {
+    if (screen === 'CONTENT_WARNING') return 'CONTENT_WARNING';
+    if (screen === 'NICKNAME') return 'NICKNAME';
+    if (screen === 'QUIZ') return `QUIZ_Q${currentQuestionIdx + 1}`;
+    if (screen === 'BONUS_INTRO') return 'BONUS_INTRO';
+    if (screen === 'BONUS_QUESTIONS') return `BONUS_Q${currentBonusIdx + 1}`;
+    return screen || `QUIZ_Q${currentQuestionIdx + 1}`;
+  };
+
+  // Export Study Data as JSON (com métricas estruturadas completas)
   const handleExportData = () => {
+    const nextEngajamento = {
+      ...engajamento,
+      exportouJson: engajamento.exportouJson + 1
+    };
+    registrarInteracaoEngajamento(nextEngajamento);
+
+    const structuredMetrics = construirPayloadSessao({
+      sessionId,
+      status: dropoutData ? 'desistencia' : 'concluida',
+      nickname,
+      consentRecord,
+      userAnswers,
+      bonusAnswers,
+      dropoutData,
+      timestamps: {
+        ...sessionTimestamps,
+        sessaoFinalizadaEm: sessionTimestamps.sessaoFinalizadaEm || new Date().toISOString()
+      },
+      engajamento: nextEngajamento
+    });
+
     const studyRecord = {
+      sessionId,
       participantNickname: nickname,
-      sessionStartedAt: sessionStartTime,
-      sessionFinishedAt: new Date().toISOString(),
+      sessionStartedAt: sessionTimestamps.sessaoIniciadaEm,
+      sessionFinishedAt: structuredMetrics.sessaoFinalizadaEm,
       consent: consentRecord,
       dropout: dropoutData,
       score: {
@@ -140,7 +296,7 @@ export function App() {
       },
       answers: userAnswers,
       bonusAnswers,
-
+      metrics: structuredMetrics
     };
 
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(studyRecord, null, 2));
@@ -152,18 +308,52 @@ export function App() {
     downloadAnchor.remove();
   };
 
-  // Restart Quiz
+  // Restart Quiz (gera nova sessão limpa)
   const handlePlayAgain = () => {
+    setSessionId(gerarSessionId());
     setUserAnswers({});
     setBonusAnswers({});
-
     setConsentRecord(null);
     setDropoutData(null);
+    setSessionTimestamps(createInitialTimestamps());
+    setEngajamento(createInitialEngajamento());
+    savedCompletionSessionRef.current = null;
+    savedDropoutSessionRef.current = null;
     setCurrentQuestionIdx(0);
     setCurrentBonusIdx(0);
     setSaveStatus({ loading: false, success: false, error: null });
     setCurrentScreen('LANDING');
   };
+
+  const handleOpenRanking = () => {
+    registrarInteracaoEngajamento(prev => ({
+      ...prev,
+      abriuRanking: prev.abriuRanking + 1
+    }));
+    setShowRankingModal(true);
+  };
+
+  const handleOpenReview = () => {
+    registrarInteracaoEngajamento(prev => ({
+      ...prev,
+      abriuRevisaoGabarito: prev.abriuRevisaoGabarito + 1,
+      filtrosRevisaoUtilizados: prev.filtrosRevisaoUtilizados.includes('ALL')
+        ? prev.filtrosRevisaoUtilizados
+        : [...prev.filtrosRevisaoUtilizados, 'ALL']
+    }));
+    setShowReviewModal(true);
+  };
+
+  if (isAdminRoute) {
+    return (
+      <AdminDashboard
+        onExitAdmin={() => {
+          window.history.pushState({}, '', '/');
+          setIsAdminRoute(false);
+        }}
+      />
+    );
+  }
 
   return (
     <div className="app-wrapper">
@@ -174,7 +364,7 @@ export function App() {
           onToggleMute={toggleMute}
           muted={muted}
           nickname={nickname}
-          onShowRanking={() => setShowRankingModal(true)}
+          onShowRanking={handleOpenRanking}
         />
       )}
 
@@ -182,18 +372,30 @@ export function App() {
       <main style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
         {currentScreen === 'LANDING' && (
           <LandingScreen 
-            onStartGame={() => setCurrentScreen('CONTENT_WARNING')}
+            onStartGame={() => {
+              setSessionTimestamps(prev => ({
+                ...prev,
+                sessaoIniciadaEm: new Date().toISOString()
+              }));
+              setCurrentScreen('CONTENT_WARNING');
+            }}
             playClick={playClick}
             muted={muted}
             onToggleMute={toggleMute}
-            onShowRanking={() => setShowRankingModal(true)}
+            onShowRanking={handleOpenRanking}
           />
         )}
 
         {currentScreen === 'CONTENT_WARNING' && (
           <ContentWarning 
-            onContinue={() => setCurrentScreen('NICKNAME')}
-            onExit={() => setShowExitModal(true)}
+            onContinue={() => {
+              setSessionTimestamps(prev => ({
+                ...prev,
+                avisoConteudoAceitoEm: new Date().toISOString()
+              }));
+              setCurrentScreen('NICKNAME');
+            }}
+            onExit={handleRequestExit}
             playClick={playClick}
           />
         )}
@@ -201,8 +403,14 @@ export function App() {
         {currentScreen === 'NICKNAME' && (
           <NicknameScreen 
             onConfirmNickname={(name, consentData) => {
+              const nowIso = new Date().toISOString();
               setNickname(name);
               setConsentRecord(consentData);
+              setSessionTimestamps(prev => ({
+                ...prev,
+                tcleAceitoEm: consentData?.acceptedAt || nowIso,
+                quizIniciadoEm: nowIso
+              }));
               setCurrentScreen('QUIZ');
             }}
             onBack={() => setCurrentScreen('CONTENT_WARNING')}
@@ -225,7 +433,7 @@ export function App() {
                 setCurrentScreen('BONUS_INTRO');
               }
             }}
-            onExit={() => setShowExitModal(true)}
+            onExit={handleRequestExit}
             playClick={playClick}
             playCorrect={playCorrect}
             playIncorrect={playIncorrect}
@@ -235,15 +443,60 @@ export function App() {
 
         {currentScreen === 'EXIT_FEEDBACK' && (
           <ExitFeedbackScreen 
-            onConfirmExit={(reason) => {
-              setDropoutData({
+            onConfirmExit={async (reason) => {
+              const exitTimestamp = new Date().toISOString();
+              const screenLabel = getScreenExitLabel(originScreenBeforeExit);
+              const dropoutPayload = {
                 reasonId: reason.id,
                 reasonLabel: reason.label,
-                screenAtExit: `QUIZ_Q${currentQuestionIdx + 1}`,
-                timestamp: new Date().toISOString()
-              });
+                screenAtExit: screenLabel,
+                questionIdx: originScreenBeforeExit === 'QUIZ' ? currentQuestionIdx : null,
+                timestamp: exitTimestamp
+              };
+              setDropoutData(dropoutPayload);
+
+              const timestampsSaida = {
+                ...sessionTimestamps,
+                sessaoFinalizadaEm: exitTimestamp
+              };
+              setSessionTimestamps(timestampsSaida);
+
+              if (savedDropoutSessionRef.current !== sessionId) {
+                savedDropoutSessionRef.current = sessionId;
+                try {
+                  let assinaturaUrl = null;
+                  if (nickname && consentRecord?.signatureDataUrl) {
+                    try {
+                      const formattedNick = formatNickname(nickname);
+                      assinaturaUrl = await uploadAssinatura(consentRecord.signatureDataUrl, formattedNick);
+                    } catch (uploadErr) {
+                      console.warn("Aviso ao enviar assinatura em desistência:", uploadErr);
+                    }
+                  }
+                  await salvarSessaoPesquisa({
+                    sessionId,
+                    status: 'desistencia',
+                    nickname,
+                    assinaturaUrl,
+                    consentRecord,
+                    userAnswers,
+                    bonusAnswers,
+                    dropoutData: dropoutPayload,
+                    timestamps: timestampsSaida,
+                    engajamento
+                  });
+                } catch (err) {
+                  console.error("Erro ao registrar desistência no Firestore:", err);
+                }
+              }
             }}
-            onResumeGame={() => setCurrentScreen('QUIZ')}
+            onResumeGame={() => {
+              registrarInteracaoEngajamento(prev => ({
+                ...prev,
+                tentativasSaidaCanceladas: prev.tentativasSaidaCanceladas + 1
+              }));
+              setCurrentScreen(originScreenBeforeExit || 'QUIZ');
+            }}
             onReturnHome={handlePlayAgain}
             playClick={playClick}
           />
@@ -251,7 +504,13 @@ export function App() {
 
         {currentScreen === 'BONUS_INTRO' && (
           <BonusIntro 
-            onNext={() => setCurrentScreen('BONUS_QUESTIONS')}
+            onNext={() => {
+              setSessionTimestamps(prev => ({
+                ...prev,
+                bonusIniciadoEm: prev.bonusIniciadoEm || new Date().toISOString()
+              }));
+              setCurrentScreen('BONUS_QUESTIONS');
+            }}
             onBack={() => {
               setCurrentQuestionIdx(QUIZ_QUESTIONS.length - 1);
               setCurrentScreen('QUIZ');
@@ -283,7 +542,7 @@ export function App() {
                 setCurrentScreen('BONUS_INTRO');
               }
             }}
-            onExit={() => setShowExitModal(true)}
+            onExit={handleRequestExit}
             playClick={playClick}
             playCorrect={playCorrect}
           />
@@ -295,9 +554,9 @@ export function App() {
             totalQuestions={QUIZ_QUESTIONS.length}
             nickname={nickname}
             onPlayAgain={handlePlayAgain}
-            onOpenReview={() => setShowReviewModal(true)}
+            onOpenReview={handleOpenReview}
             onExportData={handleExportData}
-            onOpenRanking={() => setShowRankingModal(true)}
+            onOpenRanking={handleOpenRanking}
             saveStatus={saveStatus}
             playClick={playClick}
           />
@@ -307,7 +566,13 @@ export function App() {
       {/* Global Modals */}
       {showExitModal && (
         <ExitConfirmModal 
-          onCancel={() => setShowExitModal(false)}
+          onCancel={() => {
+            registrarInteracaoEngajamento(prev => ({
+              ...prev,
+              tentativasSaidaCanceladas: prev.tentativasSaidaCanceladas + 1
+            }));
+            setShowExitModal(false);
+          }}
           onConfirm={() => {
             setShowExitModal(false);
             setCurrentScreen('EXIT_FEEDBACK');
@@ -321,6 +586,14 @@ export function App() {
           userAnswers={userAnswers}
           onClose={() => setShowReviewModal(false)}
           playClick={playClick}
+          onFilterChange={(filterId) => {
+            registrarInteracaoEngajamento(prev => ({
+              ...prev,
+              filtrosRevisaoUtilizados: prev.filtrosRevisaoUtilizados.includes(filterId)
+                ? prev.filtrosRevisaoUtilizados
+                : [...prev.filtrosRevisaoUtilizados, filterId]
+            }));
+          }}
         />
       )}
 

@@ -1,6 +1,7 @@
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
+import { getAuth } from "firebase/auth";
 import { getAnalytics, isSupported } from "firebase/analytics";
 
 // Configuração do Firebase utilizando variáveis de ambiente do Vite
@@ -20,6 +21,7 @@ const app = initializeApp(firebaseConfig);
 // Inicialização dos serviços necessários
 export const db = getFirestore(app);
 export const storage = getStorage(app);
+export const auth = getAuth(app);
 
 // Inicialização opcional do Analytics apenas se suportado no navegador
 export let analytics = null;

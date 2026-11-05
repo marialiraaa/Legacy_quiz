@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { CATEGORIES } from '../data/questions.js';
 import { FeedbackView } from './FeedbackView.jsx';
 
@@ -17,12 +17,20 @@ export function QuizQuestion({
   onExit
 }) {
   const [selectedOpt, setSelectedOpt] = useState(userAnswer || null);
+  const questionStartRef = useRef(Date.now());
   const isAnswered = selectedOpt !== null;
   const isCorrect = selectedOpt === questionData.correctAnswer;
   const categoryInfo = CATEGORIES[questionData.category] || CATEGORIES.BASIC_CONCEPTS;
 
+  useEffect(() => {
+    setSelectedOpt(userAnswer || null);
+    questionStartRef.current = Date.now();
+  }, [questionData.id, userAnswer]);
+
   const handleSelectOption = (optId) => {
     if (isAnswered) return;
+    const tempoRespostaMs = Math.max(1, Date.now() - questionStartRef.current);
+    const respondidaEm = new Date().toISOString();
     setSelectedOpt(optId);
     const correct = optId === questionData.correctAnswer;
     if (correct) {
@@ -30,7 +38,10 @@ export function QuizQuestion({
     } else {
       playIncorrect?.();
     }
-    onAnswer(questionData.id, optId, correct);
+    onAnswer(questionData.id, optId, correct, {
+      tempoRespostaMs,
+      respondidaEm
+    });
   };
 
   // If already answered, render the exact Reference Design Feedback Screen (Frame 222 / Frame 223)

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 export function BonusQuestion({
   bonusData,
@@ -12,19 +12,32 @@ export function BonusQuestion({
   playCorrect,
   onExit
 }) {
-  const [selected, setSelected] = useState(savedAnswer || null);
+  const initialOpt = typeof savedAnswer === 'object' && savedAnswer !== null
+    ? savedAnswer.selectedOpt
+    : (savedAnswer || null);
+  const [selected, setSelected] = useState(initialOpt);
+  const bonusStartRef = useRef(Date.now());
 
   // Sync state if question index changes
   useEffect(() => {
-    setSelected(savedAnswer || null);
+    const nextOpt = typeof savedAnswer === 'object' && savedAnswer !== null
+      ? savedAnswer.selectedOpt
+      : (savedAnswer || null);
+    setSelected(nextOpt);
+    bonusStartRef.current = Date.now();
   }, [bonusData.id, savedAnswer]);
 
   const handleSelect = (optId) => {
     if (selected) return; // Prevent double click
+    const tempoRespostaMs = Math.max(1, Date.now() - bonusStartRef.current);
+    const respondidaEm = new Date().toISOString();
     setSelected(optId);
     playClick?.();
     playCorrect?.();
-    onAnswerBonus?.(bonusData.id, optId);
+    onAnswerBonus?.(bonusData.id, optId, {
+      tempoRespostaMs,
+      respondidaEm
+    });
 
     // No feedback screen for bonus questions: immediately advance to next question or completion
     setTimeout(() => {

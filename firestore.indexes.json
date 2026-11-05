@@ -13,6 +13,20 @@
           "order": "ASCENDING"
         }
       ]
+    },
+    {
+      "collectionGroup": "sessoes_pesquisa",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "status",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "sessaoFinalizadaEm",
+          "order": "DESCENDING"
+        }
+      ]
     }
   ],
   "fieldOverrides": []
