@@ -114,20 +114,6 @@ export function CompletionScreen({
           )}
         </div>
 
-        {/* Research export tools */}
-        <div style={{ display: 'flex', gap: '12px', marginTop: '10px' }}>
-          <button 
-            className="btn-outline-dark" 
-            style={{ fontSize: '0.88rem', padding: '10px 20px', background: '#f1f5f9' }}
-            onClick={() => {
-              playClick();
-              onExportData();
-            }}
-          >
-            💾 Exportar Dados da Pesquisa (.JSON)
-          </button>
-        </div>
-
         <p className="thankyou-footer-text">
           Esperamos que tenha se divertido e refletido sobre a importância de seus ativos digitais.
         </p>

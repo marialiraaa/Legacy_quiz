@@ -12,17 +12,6 @@ export function TopRibbon({ title, isCyber, onToggleMute, muted, onShowTCLE, onS
       </div>
 
       <div className="header-controls">
-        {nickname && (
-          <div 
-            className="header-nickname-badge"
-            title={`Jogador: ${nickname}`}
-          >
-            <span>👤</span>
-            <span style={{ color: '#64748b', fontSize: '0.74rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Jogador:</span>
-            <span style={{ color: '#10a429', fontWeight: 800 }}>{nickname}</span>
-          </div>
-        )}
-
         {onShowRanking && (
           <button 
             className="icon-btn" 

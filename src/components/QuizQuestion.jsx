@@ -76,7 +76,7 @@ export function QuizQuestion({
   // Unanswered State: Illustration and Interactive Options
   return (
     <div className="screen-content">
-      {/* Meta Bar: Category Pill & Active Player Nickname */}
+      {/* Meta Bar: Category Pill */}
       <div style={{
         display: 'flex',
         justifyContent: 'space-between',
@@ -92,14 +92,6 @@ export function QuizQuestion({
           <span>{categoryInfo.icon}</span>
           <span>{categoryInfo.name}</span>
         </div>
-
-        {nickname && (
-          <div className="quiz-player-tag">
-            <span style={{ fontSize: '0.9rem' }}>🎮</span>
-            <span style={{ color: '#475569', fontSize: '0.74rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Jogador:</span>
-            <span style={{ color: '#10a429', fontWeight: 800 }}>{nickname}</span>
-          </div>
-        )}
       </div>
 
       <div className="quiz-unanswered-container">

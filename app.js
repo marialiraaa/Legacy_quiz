@@ -574,14 +574,6 @@
           h('h2', null, headerTitle)
         ),
         h('div', { className: 'header-controls' },
-          nickname && h('div', {
-            className: 'header-nickname-badge',
-            title: `Jogador: ${nickname}`
-          },
-            h('span', null, '👤'),
-            h('span', { style: { color: '#64748b', fontSize: '0.74rem', textTransform: 'uppercase', letterSpacing: '0.04em' } }, 'Jogador:'),
-            h('span', { style: { color: '#10a429', fontWeight: 800 } }, nickname)
-          ),
           h('button', {
             className: 'icon-btn',
             title: muted ? 'Ativar Áudio' : 'Silenciar Áudio',
@@ -1314,11 +1306,6 @@
         h('div', { className: 'category-pill', style: { borderLeft: `4px solid ${categoryInfo.color}` } },
           h('span', null, categoryInfo.icon),
           h('span', null, categoryInfo.name)
-        ),
-        nickname && h('div', { className: 'quiz-player-tag' },
-          h('span', { style: { fontSize: '0.9rem' } }, '🎮'),
-          h('span', { style: { color: '#475569', fontSize: '0.74rem', textTransform: 'uppercase', letterSpacing: '0.04em' } }, 'Jogador:'),
-          h('span', { style: { color: '#10a429', fontWeight: 800 } }, nickname)
         )
       ),
       h('div', { className: 'quiz-unanswered-container' },
@@ -1503,13 +1490,6 @@
         h('div', { style: { display: 'flex', gap: 20, flexWrap: 'wrap', justifyContent: 'center', marginTop: 10 } },
           h('button', { className: 'btn-outline-dark', style: { minWidth: 220 }, onClick: () => { sound.playClick(); onPlayAgain(); } }, 'JOGAR NOVAMENTE'),
           h('button', { className: 'btn-outline-dark', style: { minWidth: 220 }, onClick: () => { sound.playClick(); onReview(); } }, 'VER RESPOSTAS')
-        ),
-        h('div', { style: { display: 'flex', gap: 12, marginTop: 4 } },
-          h('button', {
-            className: 'btn-primary-blue',
-            style: { fontSize: '0.88rem', padding: '10px 20px', background: '#334155' },
-            onClick: () => { sound.playClick(); onExport(); }
-          }, '💾 Exportar Dados da Pesquisa (.JSON)')
         ),
         h('p', { className: 'thankyou-footer-text' },
           'Esperamos que tenha se divertido e refletido sobre a importância de seus ativos digitais.'
