@@ -149,6 +149,7 @@ export function App() {
             consentRecord,
             userAnswers,
             bonusAnswers,
+            totalQuizDurationSeconds,
             dropoutData: null,
             timestamps: timestampsFinais,
             engajamento
@@ -160,7 +161,11 @@ export function App() {
         // 2. Persiste o registro enxuto na coleção 'jogadores' para o Ranking
         try {
           const inicioMs = new Date(timestampsFinais.sessaoIniciadaEm).getTime();
-          const tempoSegundos = Math.max(1, Math.round((Date.now() - inicioMs) / 1000));
+          const fallbackSegundos = Math.max(1, Math.round((Date.now() - inicioMs) / 1000));
+          const tempoSegundos =
+            totalQuizDurationSeconds > 0
+              ? Math.max(1, Math.round(totalQuizDurationSeconds))
+              : fallbackSegundos;
           await salvarJogador({
             nickname,
             assinaturaUrl,
@@ -193,6 +198,34 @@ export function App() {
     return Object.values(userAnswers).filter(a => a.isCorrect).length;
   }, [userAnswers]);
 
+  // Tempo total gasto nas questões do quiz (em segundos, com precisão de 2 casas decimais)
+  const totalQuizDurationSeconds = useMemo(() => {
+    const answersList = Object.values(userAnswers);
+    if (answersList.length === 0) return 0;
+
+    const sumSeconds = answersList.reduce(
+      (acc, ans) => acc + (Number(ans.timeSpentSeconds) || 0),
+      0
+    );
+    if (sumSeconds > 0) {
+      return Number(sumSeconds.toFixed(2));
+    }
+
+    const startTimes = answersList
+      .map(a => (a.startedAt ? new Date(a.startedAt).getTime() : NaN))
+      .filter(t => !Number.isNaN(t));
+    const endTimes = answersList
+      .map(a => (a.answeredAt ? new Date(a.answeredAt).getTime() : NaN))
+      .filter(t => !Number.isNaN(t));
+
+    if (startTimes.length > 0 && endTimes.length > 0) {
+      const firstStart = Math.min(...startTimes);
+      const lastEnd = Math.max(...endTimes);
+      return Number((Math.max(0, lastEnd - firstStart) / 1000).toFixed(2));
+    }
+    return 0;
+  }, [userAnswers]);
+
   // Dynamic Header Title
   const headerTitle = useMemo(() => {
     switch (currentScreen) {
@@ -218,27 +251,49 @@ export function App() {
     }
   }, [currentScreen, currentQuestionIdx, currentBonusIdx]);
 
-  // Answer handler for Core Quiz (inclui tempo de resposta e timestamp da questão)
+  // Answer handler for Core Quiz (inclui tempo de resposta em segundos e timestamps de início/fim)
   const handleAnswerQuestion = (qId, selectedOpt, isCorrect, meta = {}) => {
+    const nowIso = new Date().toISOString();
+    const timeSpentSeconds =
+      typeof meta.timeSpentSeconds === 'number'
+        ? meta.timeSpentSeconds
+        : Number((((meta.tempoRespostaMs || 0) / 1000)).toFixed(2));
+
     setUserAnswers(prev => ({
       ...prev,
       [qId]: {
+        questionId: meta.questionId || `q${qId}`,
+        selectedOption: selectedOpt,
+        timeSpentSeconds,
+        startedAt: meta.startedAt || nowIso,
+        answeredAt: meta.answeredAt || meta.respondidaEm || nowIso,
         selectedOpt,
         isCorrect,
-        tempoRespostaMs: meta.tempoRespostaMs || 0,
-        respondidaEm: meta.respondidaEm || new Date().toISOString()
+        tempoRespostaMs: meta.tempoRespostaMs ?? Math.round(timeSpentSeconds * 1000),
+        respondidaEm: meta.answeredAt || meta.respondidaEm || nowIso
       }
     }));
   };
 
-  // Answer handler for Bonus Questions (inclui tempo de resposta e timestamp)
+  // Answer handler for Bonus Questions (inclui tempo de resposta em segundos e timestamps de início/fim)
   const handleAnswerBonus = (bonusId, selectedOpt, meta = {}) => {
+    const nowIso = new Date().toISOString();
+    const timeSpentSeconds =
+      typeof meta.timeSpentSeconds === 'number'
+        ? meta.timeSpentSeconds
+        : Number((((meta.tempoRespostaMs || 0) / 1000)).toFixed(2));
+
     setBonusAnswers(prev => ({
       ...prev,
       [bonusId]: {
+        questionId: meta.questionId || bonusId,
+        selectedOption: selectedOpt,
+        timeSpentSeconds,
+        startedAt: meta.startedAt || nowIso,
+        answeredAt: meta.answeredAt || meta.respondidaEm || nowIso,
         selectedOpt,
-        tempoRespostaMs: meta.tempoRespostaMs || 0,
-        respondidaEm: meta.respondidaEm || new Date().toISOString()
+        tempoRespostaMs: meta.tempoRespostaMs ?? Math.round(timeSpentSeconds * 1000),
+        respondidaEm: meta.answeredAt || meta.respondidaEm || nowIso
       }
     }));
   };
@@ -274,6 +329,7 @@ export function App() {
       consentRecord,
       userAnswers,
       bonusAnswers,
+      totalQuizDurationSeconds,
       dropoutData,
       timestamps: {
         ...sessionTimestamps,
@@ -287,6 +343,7 @@ export function App() {
       participantNickname: nickname,
       sessionStartedAt: sessionTimestamps.sessaoIniciadaEm,
       sessionFinishedAt: structuredMetrics.sessaoFinalizadaEm,
+      totalQuizDurationSeconds,
       consent: consentRecord,
       dropout: dropoutData,
       score: {
@@ -481,6 +538,7 @@ export function App() {
                     consentRecord,
                     userAnswers,
                     bonusAnswers,
+                    totalQuizDurationSeconds,
                     dropoutData: dropoutPayload,
                     timestamps: timestampsSaida,
                     engajamento

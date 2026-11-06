@@ -60,27 +60,56 @@ export function consolidarMetricasQuiz(userAnswers = {}) {
   let totalAcertos = 0;
   let totalErros = 0;
   let somaTempoQuizMs = 0;
+  let somaTempoQuizSegundos = 0;
+  const startTimestampsMs = [];
+  const endTimestampsMs = [];
 
   QUIZ_QUESTIONS.forEach((question) => {
     const ans = userAnswers[question.id];
-    if (!ans || !ans.selectedOpt) return;
+    const chosenOpt = ans?.selectedOption || ans?.selectedOpt;
+    if (!ans || !chosenOpt) return;
 
     const acertou = Boolean(ans.isCorrect);
-    const tempoMs = Math.max(1, Number(ans.tempoRespostaMs) || 0);
+    const tempoMs =
+      typeof ans.tempoRespostaMs === "number" && ans.tempoRespostaMs > 0
+        ? ans.tempoRespostaMs
+        : Math.max(1, Math.round((Number(ans.timeSpentSeconds) || 0) * 1000));
+    const timeSpentSeconds =
+      typeof ans.timeSpentSeconds === "number" && !Number.isNaN(ans.timeSpentSeconds)
+        ? Number(ans.timeSpentSeconds.toFixed(2))
+        : Number((tempoMs / 1000).toFixed(2));
+
+    const startedAt = ans.startedAt || null;
+    const answeredAt = ans.answeredAt || ans.respondidaEm || null;
+
+    if (startedAt) {
+      const sMs = new Date(startedAt).getTime();
+      if (!Number.isNaN(sMs)) startTimestampsMs.push(sMs);
+    }
+    if (answeredAt) {
+      const eMs = new Date(answeredAt).getTime();
+      if (!Number.isNaN(eMs)) endTimestampsMs.push(eMs);
+    }
 
     totalRespondidas += 1;
     if (acertou) totalAcertos += 1;
     else totalErros += 1;
     somaTempoQuizMs += tempoMs;
+    somaTempoQuizSegundos += timeSpentSeconds;
 
     respostasDetalhadas[String(question.id)] = {
+      questionId: ans.questionId || `q${question.id}`,
+      selectedOption: String(chosenOpt),
+      timeSpentSeconds,
+      startedAt,
+      answeredAt,
       questaoId: question.id,
       categoria: question.category,
-      alternativaEscolhida: String(ans.selectedOpt),
+      alternativaEscolhida: String(chosenOpt),
       alternativaCorreta: question.correctAnswer,
       acertou,
       tempoRespostaMs: tempoMs,
-      respondidaEm: ans.respondidaEm || null
+      respondidaEm: answeredAt
     };
 
     const catStats = porCategoria[question.category];
@@ -105,6 +134,13 @@ export function consolidarMetricasQuiz(userAnswers = {}) {
   const tempoMedioPorQuestaoMs =
     totalRespondidas > 0 ? Math.round(somaTempoQuizMs / totalRespondidas) : 0;
 
+  let totalQuizDurationSeconds = Number(somaTempoQuizSegundos.toFixed(2));
+  if (totalQuizDurationSeconds <= 0 && startTimestampsMs.length > 0 && endTimestampsMs.length > 0) {
+    const firstStart = Math.min(...startTimestampsMs);
+    const lastEnd = Math.max(...endTimestampsMs);
+    totalQuizDurationSeconds = Number((Math.max(0, lastEnd - firstStart) / 1000).toFixed(2));
+  }
+
   return {
     respostasQuiz: respostasDetalhadas,
     desempenho: {
@@ -116,9 +152,11 @@ export function consolidarMetricasQuiz(userAnswers = {}) {
       porCategoria
     },
     temposQuiz: {
+      totalQuizDurationSeconds,
       duracaoQuizSegundos: Math.round(somaTempoQuizMs / 1000),
       tempoTotalQuizMs: somaTempoQuizMs,
-      tempoMedioPorQuestaoMs
+      tempoMedioPorQuestaoMs,
+      tempoMedioPorQuestaoSegundos: Number((tempoMedioPorQuestaoMs / 1000).toFixed(2))
     }
   };
 }
@@ -126,7 +164,7 @@ export function consolidarMetricasQuiz(userAnswers = {}) {
 /**
  * Formata o mapa de respostas das perguntas bônus reflexivas.
  *
- * @param {Object} bonusAnswers - Mapa { [bonusId]: { selectedOpt, tempoRespostaMs, respondidaEm } | string }
+ * @param {Object} bonusAnswers - Mapa { [bonusId]: { selectedOpt, timeSpentSeconds, startedAt, answeredAt, tempoRespostaMs, respondidaEm } | string }
  * @returns {Object}
  */
 export function consolidarRespostasBonus(bonusAnswers = {}) {
@@ -138,17 +176,35 @@ export function consolidarRespostasBonus(bonusAnswers = {}) {
 
     if (typeof raw === "string") {
       resultado[bonus.id] = {
+        questionId: bonus.id,
+        selectedOption: raw,
+        timeSpentSeconds: 0,
+        startedAt: null,
+        answeredAt: null,
         perguntaId: bonus.id,
         alternativaEscolhida: raw,
         tempoRespostaMs: 0,
         respondidaEm: null
       };
-    } else if (typeof raw === "object" && raw.selectedOpt) {
+    } else if (typeof raw === "object" && (raw.selectedOption || raw.selectedOpt)) {
+      const chosen = String(raw.selectedOption || raw.selectedOpt);
+      const tempoMs = Math.max(0, Number(raw.tempoRespostaMs) || 0);
+      const timeSpentSeconds =
+        typeof raw.timeSpentSeconds === "number" && !Number.isNaN(raw.timeSpentSeconds)
+          ? Number(raw.timeSpentSeconds.toFixed(2))
+          : Number((tempoMs / 1000).toFixed(2));
+      const answeredAt = raw.answeredAt || raw.respondidaEm || null;
+
       resultado[bonus.id] = {
+        questionId: raw.questionId || bonus.id,
+        selectedOption: chosen,
+        timeSpentSeconds,
+        startedAt: raw.startedAt || null,
+        answeredAt,
         perguntaId: bonus.id,
-        alternativaEscolhida: String(raw.selectedOpt),
-        tempoRespostaMs: Math.max(0, Number(raw.tempoRespostaMs) || 0),
-        respondidaEm: raw.respondidaEm || null
+        alternativaEscolhida: chosen,
+        tempoRespostaMs: tempoMs,
+        respondidaEm: answeredAt
       };
     }
   });
@@ -171,6 +227,7 @@ export function construirPayloadSessao({
   consentRecord = null,
   userAnswers = {},
   bonusAnswers = {},
+  totalQuizDurationSeconds = null,
   dropoutData = null,
   timestamps = {},
   engajamento = {}
@@ -193,6 +250,11 @@ export function construirPayloadSessao({
 
   const { respostasQuiz, desempenho, temposQuiz } = consolidarMetricasQuiz(userAnswers);
   const respostasBonus = consolidarRespostasBonus(bonusAnswers);
+
+  const resolvedQuizDurationSeconds =
+    typeof totalQuizDurationSeconds === "number" && totalQuizDurationSeconds > 0
+      ? Number(totalQuizDurationSeconds.toFixed(2))
+      : temposQuiz.totalQuizDurationSeconds;
 
   let jogadorId = null;
   let nicknameLimpo = null;
@@ -248,10 +310,12 @@ export function construirPayloadSessao({
       atualizadoEm: agoraIso
     },
     tempos: {
+      totalQuizDurationSeconds: resolvedQuizDurationSeconds,
       duracaoTotalSegundos,
       duracaoQuizSegundos: temposQuiz.duracaoQuizSegundos,
       tempoTotalQuizMs: temposQuiz.tempoTotalQuizMs,
-      tempoMedioPorQuestaoMs: temposQuiz.tempoMedioPorQuestaoMs
+      tempoMedioPorQuestaoMs: temposQuiz.tempoMedioPorQuestaoMs,
+      tempoMedioPorQuestaoSegundos: temposQuiz.tempoMedioPorQuestaoSegundos
     },
     desempenho,
     respostasQuiz,
@@ -942,7 +1006,9 @@ export function exportarRespostasDetalhadasCSV(sessoes = [], { anonimizarNicknam
     "Alternativa_Escolhida",
     "Alternativa_Correta",
     "Resultado",
+    "Tempo_Gasto_Segundos",
     "Tempo_Resposta_Ms",
+    "Iniciada_Em",
     "Respondida_Em"
   ];
 
@@ -955,19 +1021,25 @@ export function exportarRespostasDetalhadasCSV(sessoes = [], { anonimizarNicknam
 
     // Respostas do Quiz Principal
     Object.values(s.respostasQuiz || {}).forEach((r) => {
+      const timeSec =
+        typeof r.timeSpentSeconds === "number"
+          ? r.timeSpentSeconds
+          : Number(((r.tempoRespostaMs || 0) / 1000).toFixed(2));
       rows.push(
         [
           s.sessionId || s.id,
           s.status,
           participanteLabel,
           "QUIZ_PRINCIPAL",
-          r.questaoId,
+          r.questionId || `q${r.questaoId}`,
           r.categoria,
-          r.alternativaEscolhida,
+          r.selectedOption || r.alternativaEscolhida,
           r.alternativaCorreta,
           r.acertou ? "ACERTO" : "ERRO",
+          timeSec,
           r.tempoRespostaMs ?? 0,
-          r.respondidaEm || ""
+          r.startedAt || "",
+          r.answeredAt || r.respondidaEm || ""
         ]
           .map(escapeCsvCell)
           .join(",")
@@ -976,19 +1048,25 @@ export function exportarRespostasDetalhadasCSV(sessoes = [], { anonimizarNicknam
 
     // Respostas das Perguntas Bônus
     Object.values(s.respostasBonus || {}).forEach((b) => {
+      const timeSec =
+        typeof b.timeSpentSeconds === "number"
+          ? b.timeSpentSeconds
+          : Number(((b.tempoRespostaMs || 0) / 1000).toFixed(2));
       rows.push(
         [
           s.sessionId || s.id,
           s.status,
           participanteLabel,
           "PERGUNTA_BONUS",
-          b.perguntaId,
+          b.questionId || b.perguntaId,
           "REFLEXAO_PESSOAL",
-          b.alternativaEscolhida,
+          b.selectedOption || b.alternativaEscolhida,
           "N/A",
           "REFLEXIVA",
+          timeSec,
           b.tempoRespostaMs ?? 0,
-          b.respondidaEm || ""
+          b.startedAt || "",
+          b.answeredAt || b.respondidaEm || ""
         ]
           .map(escapeCsvCell)
           .join(",")

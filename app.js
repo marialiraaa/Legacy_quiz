@@ -522,6 +522,14 @@
       return Object.values(userAnswers).filter(a => a.isCorrect).length;
     }, [userAnswers]);
 
+    const totalQuizDurationSeconds = useMemo(() => {
+      const sum = Object.values(userAnswers).reduce(
+        (acc, a) => acc + (Number(a.timeSpentSeconds) || 0),
+        0
+      );
+      return Number(sum.toFixed(2));
+    }, [userAnswers]);
+
     // Header dynamic title
     const headerTitle = useMemo(() => {
       switch (currentScreen) {
@@ -610,8 +618,19 @@
           total: QUIZ_QUESTIONS.length,
           savedAns: userAnswers[QUIZ_QUESTIONS[currentQuestionIdx].id],
           nickname: nickname,
-          onAnswer: (qId, opt, isCorrect) => {
-            setUserAnswers(prev => ({ ...prev, [qId]: { selectedOpt: opt, isCorrect } }));
+          onAnswer: (qId, opt, isCorrect, meta = {}) => {
+            setUserAnswers(prev => ({
+              ...prev,
+              [qId]: {
+                questionId: meta.questionId || `q${qId}`,
+                selectedOption: opt,
+                timeSpentSeconds: meta.timeSpentSeconds || 0,
+                startedAt: meta.startedAt || new Date().toISOString(),
+                answeredAt: meta.answeredAt || new Date().toISOString(),
+                selectedOpt: opt,
+                isCorrect
+              }
+            }));
           },
           onNext: () => {
             if (currentQuestionIdx < QUIZ_QUESTIONS.length - 1) {
@@ -1150,21 +1169,32 @@
 
   function QuizQuestionScreen({ question, currentIdx, total, savedAns, onAnswer, onNext, onPrev, sound, nickname, onExit }) {
     const [selectedOpt, setSelectedOpt] = useState(savedAns ? savedAns.selectedOpt : null);
+    const startTimeRef = useRef(Date.now());
     const isAnswered = selectedOpt !== null;
     const isCorrect = selectedOpt === question.correctAnswer;
     const categoryInfo = CATEGORIES[question.category] || CATEGORIES.BASIC_CONCEPTS;
 
     useEffect(() => {
       setSelectedOpt(savedAns ? savedAns.selectedOpt : null);
-    }, [question.id, savedAns]);
+      startTimeRef.current = Date.now();
+    }, [question.id, currentIdx, savedAns]);
 
     const handleSelect = (optId) => {
       if (isAnswered) return;
+      const startTime = startTimeRef.current;
+      const endTime = Date.now();
+      const timeSpentSeconds = Number(((endTime - startTime) / 1000).toFixed(2));
       setSelectedOpt(optId);
       const right = optId === question.correctAnswer;
       if (right) sound.playCorrect();
       else sound.playIncorrect();
-      onAnswer(question.id, optId, right);
+      onAnswer(question.id, optId, right, {
+        questionId: `q${question.id}`,
+        selectedOption: optId,
+        timeSpentSeconds,
+        startedAt: new Date(startTime).toISOString(),
+        answeredAt: new Date(endTime).toISOString()
+      });
     };
 
     function LightbulbIcon() {

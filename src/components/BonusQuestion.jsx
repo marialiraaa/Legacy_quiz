@@ -13,30 +13,40 @@ export function BonusQuestion({
   onExit
 }) {
   const initialOpt = typeof savedAnswer === 'object' && savedAnswer !== null
-    ? savedAnswer.selectedOpt
+    ? (savedAnswer.selectedOption || savedAnswer.selectedOpt)
     : (savedAnswer || null);
   const [selected, setSelected] = useState(initialOpt);
-  const bonusStartRef = useRef(Date.now());
+  const startTimeRef = useRef(Date.now());
 
-  // Sync state if question index changes
+  // Sync state & reset timer if question index changes
   useEffect(() => {
     const nextOpt = typeof savedAnswer === 'object' && savedAnswer !== null
-      ? savedAnswer.selectedOpt
+      ? (savedAnswer.selectedOption || savedAnswer.selectedOpt)
       : (savedAnswer || null);
     setSelected(nextOpt);
-    bonusStartRef.current = Date.now();
-  }, [bonusData.id, savedAnswer]);
+    startTimeRef.current = Date.now();
+  }, [bonusData.id, currentIndex, savedAnswer]);
 
   const handleSelect = (optId) => {
     if (selected) return; // Prevent double click
-    const tempoRespostaMs = Math.max(1, Date.now() - bonusStartRef.current);
-    const respondidaEm = new Date().toISOString();
+    const startTime = startTimeRef.current;
+    const endTime = Date.now();
+    const elapsedMs = Math.max(1, endTime - startTime);
+    const timeSpentSeconds = Number(((endTime - startTime) / 1000).toFixed(2));
+    const startedAt = new Date(startTime).toISOString();
+    const answeredAt = new Date(endTime).toISOString();
+
     setSelected(optId);
     playClick?.();
     playCorrect?.();
     onAnswerBonus?.(bonusData.id, optId, {
-      tempoRespostaMs,
-      respondidaEm
+      questionId: bonusData.id,
+      selectedOption: optId,
+      timeSpentSeconds,
+      startedAt,
+      answeredAt,
+      tempoRespostaMs: elapsedMs,
+      respondidaEm: answeredAt
     });
 
     // No feedback screen for bonus questions: immediately advance to next question or completion

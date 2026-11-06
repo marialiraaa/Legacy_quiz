@@ -17,20 +17,26 @@ export function QuizQuestion({
   onExit
 }) {
   const [selectedOpt, setSelectedOpt] = useState(userAnswer || null);
-  const questionStartRef = useRef(Date.now());
+  const startTimeRef = useRef(Date.now());
   const isAnswered = selectedOpt !== null;
   const isCorrect = selectedOpt === questionData.correctAnswer;
   const categoryInfo = CATEGORIES[questionData.category] || CATEGORIES.BASIC_CONCEPTS;
 
+  // Reinicia o contador de tempo automaticamente a cada mudança de questão
   useEffect(() => {
     setSelectedOpt(userAnswer || null);
-    questionStartRef.current = Date.now();
-  }, [questionData.id, userAnswer]);
+    startTimeRef.current = Date.now();
+  }, [questionData.id, currentIndex, userAnswer]);
 
   const handleSelectOption = (optId) => {
     if (isAnswered) return;
-    const tempoRespostaMs = Math.max(1, Date.now() - questionStartRef.current);
-    const respondidaEm = new Date().toISOString();
+    const startTime = startTimeRef.current;
+    const endTime = Date.now();
+    const elapsedMs = Math.max(1, endTime - startTime);
+    const timeSpentSeconds = Number(((endTime - startTime) / 1000).toFixed(2));
+    const startedAt = new Date(startTime).toISOString();
+    const answeredAt = new Date(endTime).toISOString();
+
     setSelectedOpt(optId);
     const correct = optId === questionData.correctAnswer;
     if (correct) {
@@ -39,8 +45,13 @@ export function QuizQuestion({
       playIncorrect?.();
     }
     onAnswer(questionData.id, optId, correct, {
-      tempoRespostaMs,
-      respondidaEm
+      questionId: `q${questionData.id}`,
+      selectedOption: optId,
+      timeSpentSeconds,
+      startedAt,
+      answeredAt,
+      tempoRespostaMs: elapsedMs,
+      respondidaEm: answeredAt
     });
   };
 

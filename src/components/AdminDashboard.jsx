@@ -1519,12 +1519,21 @@ export function AdminDashboard({ onExitAdmin }) {
                   {formatarDataHora(sessaoInspecionada.sessaoFinalizadaEm)}
                 </div>
                 <div>
-                  <strong>Duração Total:</strong>{" "}
+                  <strong>Duração Total (Sessão):</strong>{" "}
                   {formatarDuracao(sessaoInspecionada.tempos?.duracaoTotalSegundos)}
                 </div>
                 <div>
+                  <strong>Tempo Total Quiz:</strong>{" "}
+                  {(
+                    sessaoInspecionada.tempos?.totalQuizDurationSeconds ??
+                    sessaoInspecionada.tempos?.duracaoQuizSegundos ??
+                    0
+                  ).toFixed(2)}
+                  s
+                </div>
+                <div>
                   <strong>Tempo Médio / Questão:</strong>{" "}
-                  {((sessaoInspecionada.tempos?.tempoMedioPorQuestaoMs || 0) / 1000).toFixed(1)}s
+                  {((sessaoInspecionada.tempos?.tempoMedioPorQuestaoMs || 0) / 1000).toFixed(2)}s
                 </div>
                 <div>
                   <strong>Pontuação:</strong> {sessaoInspecionada.desempenho?.acertos ?? 0}/
@@ -1589,7 +1598,14 @@ export function AdminDashboard({ onExitAdmin }) {
                                 {r.acertou ? "✓ Acertou" : "✕ Errou"}
                               </span>
                             </td>
-                            <td>{((r.tempoRespostaMs || 0) / 1000).toFixed(2)}s</td>
+                            <td>
+                              {(
+                                typeof r.timeSpentSeconds === "number"
+                                  ? r.timeSpentSeconds
+                                  : (r.tempoRespostaMs || 0) / 1000
+                              ).toFixed(2)}
+                              s
+                            </td>
                           </tr>
                         ))
                     )}
