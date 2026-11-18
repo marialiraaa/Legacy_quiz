@@ -721,11 +721,17 @@
   function LandingScreen({ onStart, sound, muted, toggleAudio, onShowTCLE }) {
     return h('div', { className: 'landing-exact-container' },
       h('div', { className: 'landing-stage' },
-        h('img', {
-          src: 'assets/frame-227.png',
-          alt: 'Legacy Quiz - Seus dados têm um futuro. Você sabe qual?',
-          className: 'landing-bg-image'
-        }),
+        h('picture', { className: 'landing-picture' },
+          h('source', {
+            media: '(max-width: 768px)',
+            srcSet: 'assets/frame-227-mobile.jpg'
+          }),
+          h('img', {
+            src: 'assets/frame-227.png',
+            alt: 'Legacy Quiz - Seus dados têm um futuro. Você sabe qual?',
+            className: 'landing-bg-image'
+          })
+        ),
         h('div', { className: 'landing-floating-controls' },
           h('button', {
             className: 'icon-btn-floating',

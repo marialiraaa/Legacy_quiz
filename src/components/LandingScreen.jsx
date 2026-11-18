@@ -4,12 +4,15 @@ export function LandingScreen({ onStartGame, playClick, muted, onToggleMute, onS
   return (
     <div className="landing-exact-container">
       <div className="landing-stage">
-        {/* Exact high-fidelity frame from Figma */}
-        <img 
-          src="assets/frame-227.png" 
-          alt="Legacy Quiz - Seus dados têm um futuro. Você sabe qual?"
-          className="landing-bg-image"
-        />
+        {/* Exact high-fidelity frame from Figma (Desktop & Mobile responsive switch) */}
+        <picture className="landing-picture">
+          <source media="(max-width: 768px)" srcSet="assets/frame-227-mobile.jpg" />
+          <img 
+            src="assets/frame-227.png" 
+            alt="Legacy Quiz - Seus dados têm um futuro. Você sabe qual?"
+            className="landing-bg-image"
+          />
+        </picture>
 
         {/* Floating Top Controls (Audio, TCLE & Ranking) seamlessly integrated in top right */}
         <div className="landing-floating-controls">
