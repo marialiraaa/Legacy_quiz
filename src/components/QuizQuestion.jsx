@@ -17,7 +17,7 @@ export function QuizQuestion({
   const [isConfirmed, setIsConfirmed] = useState(Boolean(userAnswer));
   const startTimeRef = useRef(Date.now());
 
-  // Suporta tanto o formato novo (alternativas/texto/correta/pergunta/categoria) quanto o legado
+  // Suporta tanto o formato novo (alternativas/texto/correta/pergunta/categoria/imagem) quanto o legado
   const alternatives = questionData.alternativas || questionData.options || [];
   const questionType =
     questionData.tipo ||
@@ -36,6 +36,7 @@ export function QuizQuestion({
   const categoryInfo = getCategoryInfo(
     questionData.categoria || questionData.category
   );
+  const questionImage = questionData.imagem || questionData.image || null;
   const feedbackText =
     questionData.feedback ||
     questionData.complement ||
@@ -124,7 +125,7 @@ export function QuizQuestion({
 
   return (
     <div className="screen-content gamified-quiz-screen">
-      <div className="gamified-quiz-card">
+      <div className={`gamified-quiz-card ${isConfirmed ? 'has-feedback-open' : ''}`}>
         {/* 1. Barra de Progresso Gamificada no Topo + Indicador de Categoria/Bloco e Contagem */}
         <div className="gamified-top-header">
           <div className="gamified-meta-row">
@@ -160,7 +161,23 @@ export function QuizQuestion({
         </div>
 
         {/* 2. Corpo Animado da Questão (slideInFade a cada troca de índice/ID) */}
-        <div key={questionData.id} className="gamified-question-stage slide-in-fade">
+        <div
+          key={questionData.id}
+          className={`gamified-question-stage slide-in-fade ${
+            isConfirmed ? 'is-confirmed-stage' : ''
+          }`}
+        >
+          {/* Ilustração da Pergunta Redimensionada Proporcionalmente */}
+          {questionImage && (
+            <div className="gamified-illustration-box">
+              <img
+                src={questionImage}
+                alt={`Ilustração da pergunta ${questionData.id}`}
+                className="gamified-illustration-img"
+              />
+            </div>
+          )}
+
           {/* Lista de Alternativas */}
           <div className="options-row gamified-options-list">
             {alternatives.map((opt) => {

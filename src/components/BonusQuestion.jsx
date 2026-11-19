@@ -21,6 +21,7 @@ export function BonusQuestion({
   const startTimeRef = useRef(Date.now());
 
   const isLastBonus = currentIndex === totalBonus - 1;
+  const questionImage = bonusData.imagem || bonusData.image || null;
   const feedbackText =
     bonusData.feedback ||
     bonusData.reflection ||
@@ -88,7 +89,7 @@ export function BonusQuestion({
 
   return (
     <div className="screen-content gamified-quiz-screen">
-      <div className="gamified-quiz-card">
+      <div className={`gamified-quiz-card ${isConfirmed ? 'has-feedback-open' : ''}`}>
         {/* 1. Barra de Progresso Gamificada no Topo */}
         <div className="gamified-top-header">
           <div className="gamified-meta-row">
@@ -124,10 +125,26 @@ export function BonusQuestion({
         </div>
 
         {/* 2. Corpo Animado da Questão (slideInFade) */}
-        <div key={bonusData.id} className="gamified-question-stage slide-in-fade">
+        <div
+          key={bonusData.id}
+          className={`gamified-question-stage slide-in-fade ${
+            isConfirmed ? 'is-confirmed-stage' : ''
+          }`}
+        >
+          {questionImage && (
+            <div className="gamified-illustration-box">
+              <img
+                src={questionImage}
+                alt={`Ilustração da reflexão ${bonusData.id}`}
+                className="gamified-illustration-img"
+              />
+            </div>
+          )}
+
           <div className="options-row gamified-options-list">
-            {bonusData.options.map((opt) => {
+            {(bonusData.alternativas || bonusData.options || []).map((opt) => {
               const isSelected = selectedOption === opt.id;
+              const optText = opt.texto || opt.text;
               let stateClass = '';
               let statusIcon = null;
 
@@ -158,7 +175,7 @@ export function BonusQuestion({
                     {opt.id}
                   </div>
                   <div className="option-text gamified-option-text">
-                    {opt.text}
+                    {optText}
                   </div>
                   <div
                     className={`option-status-icon ${statusIcon ? 'visible' : ''}`}
