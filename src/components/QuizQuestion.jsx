@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { getCategoryInfo } from '../data/questions.js';
+import EmotionThermometer from '../EmotionThermometer.jsx';
 
 export function QuizQuestion({
   questionData,
@@ -16,7 +17,9 @@ export function QuizQuestion({
 }) {
   const [selectedOption, setSelectedOption] = useState(userAnswer || null);
   const [isConfirmed, setIsConfirmed] = useState(Boolean(userAnswer));
+  const [selectedEmotion, setSelectedEmotion] = useState(null);
   const startTimeRef = useRef(Date.now());
+  const answerPayloadRef = useRef(null);
 
   // Suporta tanto o formato novo (alternativas/texto/correta/pergunta/categoria/imagem) quanto o legado
   const alternatives = questionData.alternativas || questionData.options || [];
@@ -24,6 +27,7 @@ export function QuizQuestion({
     questionData.tipo ||
     (questionData.correctAnswer ? 'conhecimento' : 'reflexao');
   const isReflection = questionType === 'reflexao';
+  const shouldMeasureEmotion = Boolean(questionData.medirEmocao);
 
   // Descobre o ID da alternativa correta quando tipo === "conhecimento"
   const correctOptionObj = alternatives.find((a) => a.correta === true);
@@ -53,6 +57,8 @@ export function QuizQuestion({
   useEffect(() => {
     setSelectedOption(userAnswer || null);
     setIsConfirmed(Boolean(userAnswer));
+    setSelectedEmotion(null);
+    answerPayloadRef.current = null;
     startTimeRef.current = Date.now();
   }, [questionData.id, currentIndex, userAnswer]);
 
@@ -105,7 +111,7 @@ export function QuizQuestion({
       }
     }
 
-    onAnswer?.(questionData.id, selectedOption, evaluatedCorrect, {
+    const basePayload = {
       questionId: `q${questionData.id}`,
       selectedOption,
       timeSpentSeconds,
@@ -114,15 +120,44 @@ export function QuizQuestion({
       tempoRespostaMs: elapsedMs,
       respondidaEm: answeredAt,
       tipo: questionType,
-      categoria: questionData.categoria || categoryInfo.name
-    });
+      categoria: questionData.categoria || categoryInfo.name,
+      medirEmocao: shouldMeasureEmotion
+    };
+
+    answerPayloadRef.current = {
+      evaluatedCorrect,
+      basePayload
+    };
+
+    // Se a questão NÃO exige termômetro emocional, já envia ao App.jsx agora
+    if (!shouldMeasureEmotion) {
+      onAnswer?.(questionData.id, selectedOption, evaluatedCorrect, basePayload);
+    }
+  };
+
+  // Etapa 2.5: Ao selecionar a emoção (quando medirEmocao === true), registra o pacote completo com a emoção
+  const handleSelectEmotion = (emotionObj) => {
+    playClick?.();
+    setSelectedEmotion(emotionObj);
+
+    if (answerPayloadRef.current) {
+      const { evaluatedCorrect, basePayload } = answerPayloadRef.current;
+      onAnswer?.(questionData.id, selectedOption, evaluatedCorrect, {
+        ...basePayload,
+        emotionScore: emotionObj.emotionScore,
+        emotionLabel: emotionObj.emotionLabel
+      });
+    }
   };
 
   // Etapa 3: Avançar para a próxima pergunta
   const handleAdvance = () => {
+    if (shouldMeasureEmotion && !selectedEmotion) return;
     playClick?.();
     onNext?.();
   };
+
+  const isNextDisabled = shouldMeasureEmotion && !selectedEmotion;
 
   return (
     <div className="screen-content gamified-quiz-screen">
@@ -181,9 +216,8 @@ export function QuizQuestion({
         {/* 2. Corpo Animado da Questão (slideInFade a cada troca de índice/ID) */}
         <div
           key={questionData.id}
-          className={`gamified-question-stage slide-in-fade ${
-            isConfirmed ? 'is-confirmed-stage' : ''
-          }`}
+          className={`gamified-question-stage slide-in-fade ${isConfirmed ? 'is-confirmed-stage' : ''
+            }`}
         >
           {/* Ilustração da Pergunta Redimensionada Proporcionalmente */}
           {questionImage && (
@@ -261,13 +295,12 @@ export function QuizQuestion({
           {/* 3. Balão de Feedback Educativo (slideUpFade após confirmar) */}
           {isConfirmed && feedbackText && (
             <div
-              className={`gamified-feedback-balloon slide-up-fade ${
-                isReflection
+              className={`gamified-feedback-balloon slide-up-fade ${isReflection
                   ? 'tone-reflection'
                   : isCorrect
-                  ? 'tone-correct'
-                  : 'tone-wrong'
-              }`}
+                    ? 'tone-correct'
+                    : 'tone-wrong'
+                }`}
               role="status"
               aria-live="polite"
             >
@@ -279,8 +312,8 @@ export function QuizQuestion({
                   {isReflection
                     ? 'Reflexão Registrada'
                     : isCorrect
-                    ? 'Boa! Resposta correta.'
-                    : 'Opa! Veja a explicação:'}
+                      ? 'Boa! Resposta correta.'
+                      : 'Opa! Veja a explicação:'}
                 </span>
                 {isReflection && streak >= 2 && (
                   <span className="gamified-streak-bonus-note">
@@ -290,6 +323,14 @@ export function QuizQuestion({
               </div>
               <p className="gamified-feedback-text">{feedbackText}</p>
             </div>
+          )}
+
+          {/* 3.5 Termômetro Emocional (exibido após confirmar nas questões 9, 12, 13 e 14) */}
+          {isConfirmed && shouldMeasureEmotion && (
+            <EmotionThermometer
+              selectedEmotion={selectedEmotion}
+              onSelectEmotion={handleSelectEmotion}
+            />
           )}
         </div>
 
@@ -322,9 +363,19 @@ export function QuizQuestion({
             <button
               type="button"
               className="btn-next-question gamified-btn-primary"
+              disabled={isNextDisabled}
               onClick={handleAdvance}
+              title={
+                isNextDisabled
+                  ? 'Selecione como você se sente acima para continuar'
+                  : undefined
+              }
             >
-              {isLastQuestion ? 'Ver Resultado 🏆' : 'Próxima Pergunta →'}
+              {isNextDisabled
+                ? 'Selecione uma emoção acima'
+                : isLastQuestion
+                  ? 'Ver Resultado 🏆'
+                  : 'Próxima Pergunta →'}
             </button>
           )}
         </div>

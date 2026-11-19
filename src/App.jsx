@@ -66,7 +66,7 @@ export function App() {
   }, []);
 
   // Navigation State
-  const [currentScreen, setCurrentScreen] = useState('LANDING'); 
+  const [currentScreen, setCurrentScreen] = useState('LANDING');
   // 'LANDING' | 'CONTENT_WARNING' | 'NICKNAME' | 'VIDEO_1' | 'VIDEO_2' | 'QUIZ' | 
   // 'BONUS_INTRO' | 'BONUS_QUESTIONS' | 'COMPLETION'
   const [originScreenBeforeExit, setOriginScreenBeforeExit] = useState('QUIZ');
@@ -79,7 +79,7 @@ export function App() {
   const [sessionId, setSessionId] = useState(() => gerarSessionId());
   const [nickname, setNickname] = useState('');
   const [consentRecord, setConsentRecord] = useState(null);
-  const [userAnswers, setUserAnswers] = useState({}); // { [qId]: { selectedOpt, isCorrect, tempoRespostaMs, respondidaEm } }
+  const [userAnswers, setUserAnswers] = useState({}); // { [qId]: { selectedOpt, isCorrect, tempoRespostaMs, respondidaEm, emotionScore, emotionLabel } }
   const [bonusAnswers, setBonusAnswers] = useState({});
 
   // Sequência de Consciência (Answer Streak estilo Kahoot!)
@@ -264,7 +264,7 @@ export function App() {
     }
   }, [currentScreen, currentQuestionIdx, currentBonusIdx]);
 
-  // Answer handler for Core Quiz (respeita tipo === "conhecimento" vs "reflexao")
+  // Answer handler for Core Quiz (respeita tipo === "conhecimento" vs "reflexao" + Termômetro Emocional)
   const handleAnswerQuestion = (qId, selectedOpt, isCorrect, meta = {}) => {
     const nowIso = new Date().toISOString();
     const timeSpentSeconds =
@@ -276,19 +276,28 @@ export function App() {
     const tipoQuestao = meta.tipo || questionObj?.tipo || 'conhecimento';
     const isReflexao = tipoQuestao === 'reflexao';
 
-    // Atualiza a Sequência de Consciência (streak & maxStreak):
-    // - tipo === "conhecimento" + correta === true: incrementa +1
-    // - tipo === "conhecimento" + correta === false: zera para 0
-    // - tipo === "reflexao" (Bloco D): Bônus de Reflexão, incrementa +1 e mantém a chama acesa
-    let computedStreakAfterAnswer = 0;
-    if (isReflexao || Boolean(isCorrect) === true) {
-      computedStreakAfterAnswer = streak + 1;
-      setStreak(computedStreakAfterAnswer);
-      setMaxStreak(prev => Math.max(prev, computedStreakAfterAnswer));
-    } else {
-      computedStreakAfterAnswer = 0;
-      setStreak(0);
+    // Evita incrementar a streak duas vezes se onAnswer for chamado primeiro na confirmação e depois ao escolher a emoção
+    const alreadyAnswered = Boolean(userAnswers[qId]);
+    let computedStreakAfterAnswer = userAnswers[qId]?.streakAtAnswer ?? 0;
+
+    if (!alreadyAnswered) {
+      if (isReflexao || Boolean(isCorrect) === true) {
+        computedStreakAfterAnswer = streak + 1;
+        setStreak(computedStreakAfterAnswer);
+        setMaxStreak(prev => Math.max(prev, computedStreakAfterAnswer));
+      } else {
+        computedStreakAfterAnswer = 0;
+        setStreak(0);
+      }
     }
+
+    const emotionFields =
+      typeof meta.emotionScore === 'number'
+        ? {
+          emotionScore: meta.emotionScore,
+          emotionLabel: meta.emotionLabel || null
+        }
+        : {};
 
     const answerPayload = {
       questionId: meta.questionId || `q${qId}`,
@@ -301,7 +310,8 @@ export function App() {
       isCorrect: isReflexao ? null : Boolean(isCorrect),
       streakAtAnswer: computedStreakAfterAnswer,
       tempoRespostaMs: meta.tempoRespostaMs ?? Math.round(timeSpentSeconds * 1000),
-      respondidaEm: meta.answeredAt || meta.respondidaEm || nowIso
+      respondidaEm: meta.answeredAt || meta.respondidaEm || nowIso,
+      ...emotionFields
     };
 
     setUserAnswers(prev => ({
@@ -329,7 +339,8 @@ export function App() {
           answeredAt: meta.answeredAt || meta.respondidaEm || nowIso,
           selectedOpt,
           tempoRespostaMs: meta.tempoRespostaMs ?? Math.round(timeSpentSeconds * 1000),
-          respondidaEm: meta.answeredAt || meta.respondidaEm || nowIso
+          respondidaEm: meta.answeredAt || meta.respondidaEm || nowIso,
+          ...emotionFields
         }
       }));
     }
@@ -480,7 +491,7 @@ export function App() {
     <div className="app-wrapper">
       {/* Top Header Ribbon with dynamic titles (hidden on LANDING since Frame 227 already has the header embedded) */}
       {currentScreen !== 'LANDING' && (
-        <TopRibbon 
+        <TopRibbon
           title={headerTitle}
           onToggleMute={toggleMute}
           muted={muted}
@@ -492,7 +503,7 @@ export function App() {
       {/* Screen Router */}
       <main style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
         {currentScreen === 'LANDING' && (
-          <LandingScreen 
+          <LandingScreen
             onStartGame={() => {
               setSessionTimestamps(prev => ({
                 ...prev,
@@ -508,7 +519,7 @@ export function App() {
         )}
 
         {currentScreen === 'CONTENT_WARNING' && (
-          <ContentWarning 
+          <ContentWarning
             onContinue={() => {
               setSessionTimestamps(prev => ({
                 ...prev,
@@ -522,7 +533,7 @@ export function App() {
         )}
 
         {currentScreen === 'NICKNAME' && (
-          <NicknameScreen 
+          <NicknameScreen
             onConfirmNickname={(name, consentData) => {
               const nowIso = new Date().toISOString();
               setNickname(name);
@@ -540,7 +551,7 @@ export function App() {
         )}
 
         {currentScreen === 'QUIZ' && (
-          <QuizQuestion 
+          <QuizQuestion
             key={QUIZ_QUESTIONS[currentQuestionIdx].id}
             questionData={QUIZ_QUESTIONS[currentQuestionIdx]}
             currentIndex={currentQuestionIdx}
@@ -566,7 +577,7 @@ export function App() {
         )}
 
         {currentScreen === 'EXIT_FEEDBACK' && (
-          <ExitFeedbackScreen 
+          <ExitFeedbackScreen
             onConfirmExit={async (reason) => {
               const exitTimestamp = new Date().toISOString();
               const screenLabel = getScreenExitLabel(originScreenBeforeExit);
@@ -628,7 +639,7 @@ export function App() {
         )}
 
         {currentScreen === 'BONUS_INTRO' && (
-          <BonusIntro 
+          <BonusIntro
             onNext={() => {
               setSessionTimestamps(prev => ({
                 ...prev,
@@ -645,7 +656,7 @@ export function App() {
         )}
 
         {currentScreen === 'BONUS_QUESTIONS' && (
-          <BonusQuestion 
+          <BonusQuestion
             key={BONUS_QUESTIONS[currentBonusIdx].id}
             bonusData={BONUS_QUESTIONS[currentBonusIdx]}
             currentIndex={currentBonusIdx}
@@ -674,7 +685,7 @@ export function App() {
         )}
 
         {currentScreen === 'COMPLETION' && (
-          <CompletionScreen 
+          <CompletionScreen
             score={score}
             totalQuestions={totalKnowledgeQuestions}
             maxStreak={maxStreak}
@@ -691,7 +702,7 @@ export function App() {
 
       {/* Global Modals */}
       {showExitModal && (
-        <ExitConfirmModal 
+        <ExitConfirmModal
           onCancel={() => {
             registrarInteracaoEngajamento(prev => ({
               ...prev,
@@ -708,7 +719,7 @@ export function App() {
       )}
 
       {showReviewModal && (
-        <ReviewModal 
+        <ReviewModal
           userAnswers={userAnswers}
           onClose={() => setShowReviewModal(false)}
           playClick={playClick}
@@ -724,7 +735,7 @@ export function App() {
       )}
 
       {showRankingModal && (
-        <RankingModal 
+        <RankingModal
           isOpen={showRankingModal}
           onClose={() => setShowRankingModal(false)}
           currentNickname={nickname}

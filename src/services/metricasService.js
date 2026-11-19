@@ -34,7 +34,7 @@ export function gerarSessionId() {
  * Calcula o desempenho detalhado geral e agrupado por categoria temática
  * a partir do mapa de respostas do participante.
  *
- * @param {Object} userAnswers - Mapa { [questionId]: { selectedOpt, isCorrect, tempoRespostaMs, respondidaEm } }
+ * @param {Object} userAnswers - Mapa { [questionId]: { selectedOpt, isCorrect, tempoRespostaMs, respondidaEm, emotionScore, emotionLabel } }
  * @returns {Object} Estrutura consolidada de desempenho e tempos do quiz
  */
 export function consolidarMetricasQuiz(userAnswers = {}) {
@@ -82,6 +82,7 @@ export function consolidarMetricasQuiz(userAnswers = {}) {
     } else {
       currentStreak = 0;
     }
+
     const tempoMs =
       typeof ans.tempoRespostaMs === "number" && ans.tempoRespostaMs > 0
         ? ans.tempoRespostaMs
@@ -111,6 +112,10 @@ export function consolidarMetricasQuiz(userAnswers = {}) {
     somaTempoQuizMs += tempoMs;
     somaTempoQuizSegundos += timeSpentSeconds;
 
+    const emotionScore =
+      typeof ans.emotionScore === "number" ? ans.emotionScore : null;
+    const emotionLabel = ans.emotionLabel || null;
+
     respostasDetalhadas[String(question.id)] = {
       questionId: ans.questionId || `q${question.id}`,
       selectedOption: String(chosenOpt),
@@ -125,7 +130,10 @@ export function consolidarMetricasQuiz(userAnswers = {}) {
       alternativaCorreta: isReflection ? null : question.correctAnswer,
       acertou,
       tempoRespostaMs: tempoMs,
-      respondidaEm: answeredAt
+      respondidaEm: answeredAt,
+      medirEmocao: Boolean(question.medirEmocao),
+      emotionScore,
+      emotionLabel
     };
 
     const catStats = porCategoria[question.category];
@@ -191,7 +199,7 @@ export function consolidarMetricasQuiz(userAnswers = {}) {
 /**
  * Formata o mapa de respostas das perguntas bônus reflexivas.
  *
- * @param {Object} bonusAnswers - Mapa { [bonusId]: { selectedOpt, timeSpentSeconds, startedAt, answeredAt, tempoRespostaMs, respondidaEm } | string }
+ * @param {Object} bonusAnswers - Mapa { [bonusId]: { selectedOpt, timeSpentSeconds, startedAt, answeredAt, tempoRespostaMs, respondidaEm, emotionScore, emotionLabel } | string }
  * @returns {Object}
  */
 export function consolidarRespostasBonus(bonusAnswers = {}, userAnswers = {}) {
@@ -213,7 +221,9 @@ export function consolidarRespostasBonus(bonusAnswers = {}, userAnswers = {}) {
         perguntaId: bonus.id,
         alternativaEscolhida: raw,
         tempoRespostaMs: 0,
-        respondidaEm: null
+        respondidaEm: null,
+        emotionScore: null,
+        emotionLabel: null
       };
     } else if (typeof raw === "object" && (raw.selectedOption || raw.selectedOpt)) {
       const chosen = String(raw.selectedOption || raw.selectedOpt);
@@ -223,6 +233,14 @@ export function consolidarRespostasBonus(bonusAnswers = {}, userAnswers = {}) {
           ? Number(raw.timeSpentSeconds.toFixed(2))
           : Number((tempoMs / 1000).toFixed(2));
       const answeredAt = raw.answeredAt || raw.respondidaEm || null;
+      const numericAns = bonus.questionIdNumeric ? userAnswers[bonus.questionIdNumeric] : null;
+      const emotionScore =
+        typeof raw.emotionScore === "number"
+          ? raw.emotionScore
+          : typeof numericAns?.emotionScore === "number"
+            ? numericAns.emotionScore
+            : null;
+      const emotionLabel = raw.emotionLabel || numericAns?.emotionLabel || null;
 
       resultado[bonus.id] = {
         questionId: raw.questionId || bonus.id,
@@ -233,7 +251,9 @@ export function consolidarRespostasBonus(bonusAnswers = {}, userAnswers = {}) {
         perguntaId: bonus.id,
         alternativaEscolhida: chosen,
         tempoRespostaMs: tempoMs,
-        respondidaEm: answeredAt
+        respondidaEm: answeredAt,
+        emotionScore,
+        emotionLabel
       };
     }
   });
@@ -302,27 +322,27 @@ export function construirPayloadSessao({
 
   const consentimento = consentRecord
     ? {
-        aceito: true,
-        caae: consentRecord.caae || "94717525.4.0000.5690",
-        aceitoEm: consentRecord.acceptedAt || timestamps.tcleAceitoEm || null
-      }
+      aceito: true,
+      caae: consentRecord.caae || "94717525.4.0000.5690",
+      aceitoEm: consentRecord.acceptedAt || timestamps.tcleAceitoEm || null
+    }
     : {
-        aceito: false,
-        caae: "94717525.4.0000.5690",
-        aceitoEm: null
-      };
+      aceito: false,
+      caae: "94717525.4.0000.5690",
+      aceitoEm: null
+    };
 
   const desistencia = dropoutData
     ? {
-        motivoId: String(dropoutData.reasonId || "no_comment"),
-        motivoLabel: String(dropoutData.reasonLabel || "Nada a declarar"),
-        telaOuQuestaoDeSaida: String(dropoutData.screenAtExit || "UNKNOWN"),
-        questaoAtualIdx:
-          typeof dropoutData.questionIdx === "number" ? dropoutData.questionIdx : null,
-        questoesRespondidasAteSaida: desempenho.questoesRespondidas,
-        tempoAteSaidaSegundos: duracaoTotalSegundos,
-        registradaEm: dropoutData.timestamp || fimIso
-      }
+      motivoId: String(dropoutData.reasonId || "no_comment"),
+      motivoLabel: String(dropoutData.reasonLabel || "Nada a declarar"),
+      telaOuQuestaoDeSaida: String(dropoutData.screenAtExit || "UNKNOWN"),
+      questaoAtualIdx:
+        typeof dropoutData.questionIdx === "number" ? dropoutData.questionIdx : null,
+      questoesRespondidasAteSaida: desempenho.questoesRespondidas,
+      tempoAteSaidaSegundos: duracaoTotalSegundos,
+      registradaEm: dropoutData.timestamp || fimIso
+    }
     : null;
 
   return {
@@ -369,11 +389,6 @@ export function construirPayloadSessao({
 
 /**
  * Salva as métricas completas da sessão na coleção 'sessoes_pesquisa' do Firestore.
- * Previne duplicidade utilizando o `sessionId` como chave determinística do documento,
- * validada pelas Security Rules (`!exists(...)`).
- *
- * @param {Object} params - Mesmos parâmetros de construirPayloadSessao
- * @returns {Promise<{ sessionId: string, payload: Object }>}
  */
 export async function salvarSessaoPesquisa(params) {
   const payload = construirPayloadSessao(params);
@@ -387,12 +402,7 @@ export async function salvarSessaoPesquisa(params) {
 }
 
 /**
- * Atualiza de forma assíncrona e não-bloqueante os indicadores de engajamento pós-jogo
- * (ex: abrir revisão de gabarito, consultar ranking ou exportar JSON na tela de conclusão).
- *
- * @param {string} sessionId
- * @param {Object} engajamentoAtualizado
- * @returns {Promise<void>}
+ * Atualiza de forma assíncrona e não-bloqueante os indicadores de engajamento pós-jogo.
  */
 export async function atualizarEngajamentoSessao(sessionId, engajamentoAtualizado) {
   if (!sessionId || typeof sessionId !== "string") return;
@@ -419,12 +429,6 @@ export async function atualizarEngajamentoSessao(sessionId, engajamentoAtualizad
 
 /**
  * Consulta sessões registradas na coleção 'sessoes_pesquisa' para análises futuras.
- * Requer autenticação administrativa conforme definido em firestore.rules.
- *
- * @param {Object} options
- * @param {string} [options.status] - Filtrar opcionalmente por 'concluida' ou 'desistencia'
- * @param {number} [options.maxResults=200] - Limite máximo de documentos retornados
- * @returns {Promise<Array<Object>>}
  */
 export async function buscarSessoesPesquisa({ status = null, maxResults = 200 } = {}) {
   const colRef = collection(db, COLLECTION_SESSOES);
@@ -455,12 +459,6 @@ export async function buscarSessoesPesquisa({ status = null, maxResults = 200 } 
 
 /**
  * Escuta em tempo real (Realtime Listener) os registros da coleção 'sessoes_pesquisa'.
- * Atualiza automaticamente o Painel Administrativo quando novas sessões são gravadas.
- *
- * @param {function(Array<Object>): void} onUpdate
- * @param {function(Error): void} [onError]
- * @param {number} [maxResults=500]
- * @returns {function(): void} Função de unsubscribe
  */
 export function ouvirSessoesPesquisaEmTempoReal(onUpdate, onError, maxResults = 500) {
   const colRef = collection(db, COLLECTION_SESSOES);
@@ -487,9 +485,6 @@ export function ouvirSessoesPesquisaEmTempoReal(onUpdate, onError, maxResults = 
 
 /**
  * Busca uma sessão específica pelo seu identificador único (`sessionId`).
- *
- * @param {string} sessionId
- * @returns {Promise<Object|null>}
  */
 export async function buscarSessaoPorId(sessionId) {
   if (!sessionId) return null;
@@ -501,9 +496,6 @@ export async function buscarSessaoPorId(sessionId) {
 
 /**
  * Calcula estatísticas agregadas resumidas a partir de uma lista de sessões.
- *
- * @param {Array<Object>} sessoes
- * @returns {Object} Resumo analítico das sessões
  */
 export function calcularResumoMetricas(sessoes = []) {
   const totalSessoes = sessoes.length;
@@ -519,19 +511,19 @@ export function calcularResumoMetricas(sessoes = []) {
   const mediaPontuacao =
     concluidas.length > 0
       ? Number(
-          (
-            concluidas.reduce((acc, s) => acc + (s.desempenho?.acertos || 0), 0) /
-            concluidas.length
-          ).toFixed(2)
-        )
+        (
+          concluidas.reduce((acc, s) => acc + (s.desempenho?.acertos || 0), 0) /
+          concluidas.length
+        ).toFixed(2)
+      )
       : 0;
 
   const mediaDuracaoSegundos =
     concluidas.length > 0
       ? Math.round(
-          concluidas.reduce((acc, s) => acc + (s.tempos?.duracaoTotalSegundos || 0), 0) /
-            concluidas.length
-        )
+        concluidas.reduce((acc, s) => acc + (s.tempos?.duracaoTotalSegundos || 0), 0) /
+        concluidas.length
+      )
       : 0;
 
   return {
@@ -548,12 +540,7 @@ export function calcularResumoMetricas(sessoes = []) {
 
 /**
  * Calcula o conjunto analítico completo para renderização dos gráficos, KPIs,
- * tabelas e indicadores de proporção do Painel Administrativo, utilizando
- * estritamente os registros reais armazenados no banco de dados.
- *
- * @param {Array<Object>} sessoes - Documentos reais da coleção 'sessoes_pesquisa'
- * @param {string} [filtroCategoria='ALL'] - Chave de categoria opcional para filtrar questões
- * @returns {Object}
+ * tabelas e indicadores de proporção do Painel Administrativo.
  */
 export function calcularAnaliticoCompleto(sessoes = [], filtroCategoria = "ALL") {
   const totalSessoes = sessoes.length;
@@ -564,7 +551,6 @@ export function calcularAnaliticoCompleto(sessoes = [], filtroCategoria = "ALL")
     totalSessoes > 0 ? Math.round((concluidas.length / totalSessoes) * 100) : 0;
   const taxaDesistencia = totalSessoes > 0 ? 100 - taxaConclusao : 0;
 
-  // Pontuação e tempos nas sessões concluídas
   const somaAcertosConcluidas = concluidas.reduce(
     (acc, s) => acc + (Number(s.desempenho?.acertos) || 0),
     0
@@ -585,7 +571,6 @@ export function calcularAnaliticoCompleto(sessoes = [], filtroCategoria = "ALL")
   const mediaDuracaoSegundos =
     concluidas.length > 0 ? Math.round(somaDuracaoConcluidas / concluidas.length) : 0;
 
-  // Tempo médio por questão considerando todas as sessões que responderam ao menos 1 questão
   let totalQuestoesRespondidasGlobal = 0;
   let somaTempoRespostasGlobalMs = 0;
   sessoes.forEach((s) => {
@@ -599,12 +584,11 @@ export function calcularAnaliticoCompleto(sessoes = [], filtroCategoria = "ALL")
       ? Math.round(somaTempoRespostasGlobalMs / totalQuestoesRespondidasGlobal)
       : 0;
 
-  // Consentimento TCLE
   const totalTcleAceito = sessoes.filter((s) => s.consentimento?.aceito === true).length;
   const taxaAceiteTcle =
     totalSessoes > 0 ? Math.round((totalTcleAceito / totalSessoes) * 100) : 0;
 
-  // 1. Evolução Temporal (agrupada por dia YYYY-MM-DD)
+  // 1. Evolução Temporal
   const mapaPorDia = {};
   sessoes.forEach((s) => {
     const dataIso =
@@ -612,7 +596,7 @@ export function calcularAnaliticoCompleto(sessoes = [], filtroCategoria = "ALL")
       s.timestamps?.sessaoFinalizadaEm ||
       s.timestamps?.sessaoIniciadaEm;
     if (!dataIso) return;
-    const diaKey = dataIso.substring(0, 10); // YYYY-MM-DD
+    const diaKey = dataIso.substring(0, 10);
     if (!mapaPorDia[diaKey]) {
       mapaPorDia[diaKey] = {
         diaKey,
@@ -677,7 +661,7 @@ export function calcularAnaliticoCompleto(sessoes = [], filtroCategoria = "ALL")
     };
   });
 
-  // 3. Estatísticas Detalhadas por Questão (1 a 24)
+  // 3. Estatísticas Detalhadas por Questão (inclui média e contagem do Termômetro Emocional)
   const questoesFiltradas =
     filtroCategoria && filtroCategoria !== "ALL"
       ? QUIZ_QUESTIONS.filter((q) => q.category === filtroCategoria)
@@ -689,6 +673,9 @@ export function calcularAnaliticoCompleto(sessoes = [], filtroCategoria = "ALL")
     let erros = 0;
     let somaTempoMs = 0;
     const contagemOpcoes = { A: 0, B: 0, C: 0 };
+    const contagemEmocoes = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+    let somaEmocoes = 0;
+    let totalEmocoes = 0;
 
     const isReflection = q.tipo === "reflexao";
     sessoes.forEach((s) => {
@@ -706,14 +693,22 @@ export function calcularAnaliticoCompleto(sessoes = [], filtroCategoria = "ALL")
       if (contagemOpcoes[opt] !== undefined) {
         contagemOpcoes[opt] += 1;
       }
+
+      if (typeof resp.emotionScore === "number" && contagemEmocoes[resp.emotionScore] !== undefined) {
+        contagemEmocoes[resp.emotionScore] += 1;
+        somaEmocoes += resp.emotionScore;
+        totalEmocoes += 1;
+      }
     });
 
     const taxaAcerto = isReflection
       ? 100
       : respondidas > 0
-      ? Math.round((acertos / respondidas) * 100)
-      : 0;
+        ? Math.round((acertos / respondidas) * 100)
+        : 0;
     const tempoMedioMs = respondidas > 0 ? Math.round(somaTempoMs / respondidas) : 0;
+    const mediaEmocao =
+      totalEmocoes > 0 ? Number((somaEmocoes / totalEmocoes).toFixed(2)) : null;
 
     return {
       id: q.id,
@@ -723,6 +718,7 @@ export function calcularAnaliticoCompleto(sessoes = [], filtroCategoria = "ALL")
       categoriaBadge: CATEGORIES[q.category]?.badge || q.category,
       categoriaColor: CATEGORIES[q.category]?.color || "#3b82f6",
       correta: q.correctAnswer,
+      medirEmocao: Boolean(q.medirEmocao),
       respondidas,
       acertos,
       erros,
@@ -730,6 +726,8 @@ export function calcularAnaliticoCompleto(sessoes = [], filtroCategoria = "ALL")
       tempoMedioMs,
       tempoMedioSegundos: Number((tempoMedioMs / 1000).toFixed(1)),
       contagemOpcoes,
+      contagemEmocoes,
+      mediaEmocao,
       percentualOpcoes: {
         A: respondidas > 0 ? Math.round((contagemOpcoes.A / respondidas) * 100) : 0,
         B: respondidas > 0 ? Math.round((contagemOpcoes.B / respondidas) * 100) : 0,
@@ -778,7 +776,7 @@ export function calcularAnaliticoCompleto(sessoes = [], filtroCategoria = "ALL")
     };
   });
 
-  // 5. Análise de Desistências (Motivos Emocionais e Telas de Saída)
+  // 5. Análise de Desistências
   const catalogoMotivos = {
     felt_bad: { id: "felt_bad", label: "Me senti mal", color: "#f59e0b", emoji: "🥺" },
     disliked_topic: {
@@ -843,7 +841,7 @@ export function calcularAnaliticoCompleto(sessoes = [], filtroCategoria = "ALL")
     }))
     .sort((a, b) => b.quantidade - a.quantidade);
 
-  // 6. Funil de Retenção da Jornada
+  // 6. Funil de Retenção
   const aceitaramAviso = sessoes.filter(
     (s) => Boolean(s.timestamps?.avisoConteudoAceitoEm) || Boolean(s.consentimento?.aceito)
   ).length;
@@ -934,9 +932,6 @@ export function calcularAnaliticoCompleto(sessoes = [], filtroCategoria = "ALL")
   };
 }
 
-/**
- * Escapa valores para células CSV seguras.
- */
 function escapeCsvCell(val) {
   if (val === null || val === undefined) return "";
   const str = String(val).replace(/"/g, '""');
@@ -946,9 +941,6 @@ function escapeCsvCell(val) {
   return str;
 }
 
-/**
- * Dispara o download de um arquivo no navegador com BOM UTF-8 (compatível com Microsoft Excel).
- */
 function downloadTextFile(content, filename, mimeType = "text/csv;charset=utf-8;") {
   const bom = "\uFEFF";
   const blob = new Blob([bom + content], { type: mimeType });
@@ -963,11 +955,7 @@ function downloadTextFile(content, filename, mimeType = "text/csv;charset=utf-8;
 }
 
 /**
- * Exporta o resumo das sessões filtradas para CSV (preservando a privacidade quando solicitado).
- *
- * @param {Array<Object>} sessoes
- * @param {Object} [options]
- * @param {boolean} [options.anonimizarNickname=true]
+ * Exporta o resumo das sessões filtradas para CSV.
  */
 export function exportarSessoesCSV(sessoes = [], { anonimizarNickname = true } = {}) {
   const headers = [
@@ -985,8 +973,12 @@ export function exportarSessoesCSV(sessoes = [], { anonimizarNickname = true } =
     "Acertos",
     "Erros",
     "Percentual_Acerto",
+    "Emocao_Q9",
+    "Emocao_Q12",
     "Bonus_1_Escolha",
+    "Emocao_Bonus_1_Q13",
     "Bonus_2_Escolha",
+    "Emocao_Bonus_2_Q14",
     "Motivo_Desistencia_ID",
     "Motivo_Desistencia_Texto",
     "Tela_Saida",
@@ -1000,6 +992,21 @@ export function exportarSessoesCSV(sessoes = [], { anonimizarNickname = true } =
       ? `Participante_${String(idx + 1).padStart(3, "0")}`
       : s.nickname || "Anonimo";
 
+    const q9Emo = s.respostasQuiz?.["9"]?.emotionLabel
+      ? `${s.respostasQuiz["9"].emotionScore} (${s.respostasQuiz["9"].emotionLabel})`
+      : "";
+    const q12Emo = s.respostasQuiz?.["12"]?.emotionLabel
+      ? `${s.respostasQuiz["12"].emotionScore} (${s.respostasQuiz["12"].emotionLabel})`
+      : "";
+    const q13Emo =
+      s.respostasBonus?.bonus_1?.emotionLabel || s.respostasQuiz?.["13"]?.emotionLabel
+        ? `${s.respostasBonus?.bonus_1?.emotionScore ?? s.respostasQuiz?.["13"]?.emotionScore} (${s.respostasBonus?.bonus_1?.emotionLabel || s.respostasQuiz?.["13"]?.emotionLabel})`
+        : "";
+    const q14Emo =
+      s.respostasBonus?.bonus_2?.emotionLabel || s.respostasQuiz?.["14"]?.emotionLabel
+        ? `${s.respostasBonus?.bonus_2?.emotionScore ?? s.respostasQuiz?.["14"]?.emotionScore} (${s.respostasBonus?.bonus_2?.emotionLabel || s.respostasQuiz?.["14"]?.emotionLabel})`
+        : "";
+
     return [
       s.sessionId || s.id,
       s.status,
@@ -1011,12 +1018,16 @@ export function exportarSessoesCSV(sessoes = [], { anonimizarNickname = true } =
       s.tempos?.duracaoQuizSegundos ?? 0,
       s.tempos?.tempoMedioPorQuestaoMs ?? 0,
       s.desempenho?.questoesRespondidas ?? 0,
-      s.desempenho?.totalQuestoes ?? 24,
+      s.desempenho?.totalQuestoes ?? 12,
       s.desempenho?.acertos ?? 0,
       s.desempenho?.erros ?? 0,
       s.desempenho?.percentualAcerto ?? 0,
+      q9Emo,
+      q12Emo,
       s.respostasBonus?.bonus_1?.alternativaEscolhida || "",
+      q13Emo,
       s.respostasBonus?.bonus_2?.alternativaEscolhida || "",
+      q14Emo,
       s.desistencia?.motivoId || "",
       s.desistencia?.motivoLabel || "",
       s.desistencia?.telaOuQuestaoDeSaida || "",
@@ -1034,10 +1045,6 @@ export function exportarSessoesCSV(sessoes = [], { anonimizarNickname = true } =
 
 /**
  * Exporta todas as respostas individuais por questão (formato longo/tabular ideal para R, SPSS, Python e Excel).
- *
- * @param {Array<Object>} sessoes
- * @param {Object} [options]
- * @param {boolean} [options.anonimizarNickname=true]
  */
 export function exportarRespostasDetalhadasCSV(sessoes = [], { anonimizarNickname = true } = {}) {
   const headers = [
@@ -1050,6 +1057,8 @@ export function exportarRespostasDetalhadasCSV(sessoes = [], { anonimizarNicknam
     "Alternativa_Escolhida",
     "Alternativa_Correta",
     "Resultado",
+    "Nota_Emocao",
+    "Rotulo_Emocao",
     "Tempo_Gasto_Segundos",
     "Tempo_Resposta_Ms",
     "Iniciada_Em",
@@ -1063,54 +1072,29 @@ export function exportarRespostasDetalhadasCSV(sessoes = [], { anonimizarNicknam
       ? `Participante_${String(idx + 1).padStart(3, "0")}`
       : s.nickname || "Anonimo";
 
-    // Respostas do Quiz Principal
     Object.values(s.respostasQuiz || {}).forEach((r) => {
       const timeSec =
         typeof r.timeSpentSeconds === "number"
           ? r.timeSpentSeconds
           : Number(((r.tempoRespostaMs || 0) / 1000).toFixed(2));
+      const isRef = r.tipo === "reflexao" || r.acertou === null;
       rows.push(
         [
           s.sessionId || s.id,
           s.status,
           participanteLabel,
-          "QUIZ_PRINCIPAL",
+          isRef ? "REFLEXAO_BLOCO_D" : "QUIZ_PRINCIPAL",
           r.questionId || `q${r.questaoId}`,
           r.categoria,
           r.selectedOption || r.alternativaEscolhida,
-          r.alternativaCorreta,
-          r.acertou ? "ACERTO" : "ERRO",
+          isRef ? "N/A" : r.alternativaCorreta,
+          isRef ? "REFLEXIVA" : r.acertou ? "ACERTO" : "ERRO",
+          r.emotionScore ?? "",
+          r.emotionLabel || "",
           timeSec,
           r.tempoRespostaMs ?? 0,
           r.startedAt || "",
           r.answeredAt || r.respondidaEm || ""
-        ]
-          .map(escapeCsvCell)
-          .join(",")
-      );
-    });
-
-    // Respostas das Perguntas Bônus
-    Object.values(s.respostasBonus || {}).forEach((b) => {
-      const timeSec =
-        typeof b.timeSpentSeconds === "number"
-          ? b.timeSpentSeconds
-          : Number(((b.tempoRespostaMs || 0) / 1000).toFixed(2));
-      rows.push(
-        [
-          s.sessionId || s.id,
-          s.status,
-          participanteLabel,
-          "PERGUNTA_BONUS",
-          b.questionId || b.perguntaId,
-          "REFLEXAO_PESSOAL",
-          b.selectedOption || b.alternativaEscolhida,
-          "N/A",
-          "REFLEXIVA",
-          timeSec,
-          b.tempoRespostaMs ?? 0,
-          b.startedAt || "",
-          b.answeredAt || b.respondidaEm || ""
         ]
           .map(escapeCsvCell)
           .join(",")
@@ -1123,13 +1107,7 @@ export function exportarRespostasDetalhadasCSV(sessoes = [], { anonimizarNicknam
 }
 
 /**
- * Exporta uma planilha formatada compatível com Microsoft Excel (.xls via SpreadsheetML XML)
- * contendo múltiplas abas: Resumo das Sessões, Desempenho por Questão e Desempenho por Categoria.
- *
- * @param {Array<Object>} sessoes
- * @param {Object} analitico - Objeto retornado por calcularAnaliticoCompleto(sessoes)
- * @param {Object} [options]
- * @param {boolean} [options.anonimizarNickname=true]
+ * Exporta uma planilha formatada compatível com Microsoft Excel (.xls via SpreadsheetML XML).
  */
 export function exportarPlanilhaExcel(sessoes = [], analitico, { anonimizarNickname = true } = {}) {
   const escapeXml = (val) =>
@@ -1165,29 +1143,54 @@ export function exportarPlanilhaExcel(sessoes = [], analitico, { anonimizarNickn
     "Erros",
     "Aproveitamento (%)",
     "Tempo Médio/Questão (ms)",
+    "Emoção Q9",
+    "Emoção Q12",
     "Bônus 1",
+    "Emoção Q13",
     "Bônus 2",
+    "Emoção Q14",
     "Motivo Desistência",
     "Tela de Saída"
   ];
-  const sessoesRows = sessoes.map((s, idx) => [
-    s.sessionId || s.id,
-    s.status,
-    anonimizarNickname ? `Participante_${String(idx + 1).padStart(3, "0")}` : s.nickname || "Anônimo",
-    s.consentimento?.aceito ? "Sim" : "Não",
-    s.timestamps?.sessaoIniciadaEm || "",
-    s.sessaoFinalizadaEm || "",
-    Number(s.tempos?.duracaoTotalSegundos) || 0,
-    Number(s.desempenho?.questoesRespondidas) || 0,
-    Number(s.desempenho?.acertos) || 0,
-    Number(s.desempenho?.erros) || 0,
-    Number(s.desempenho?.percentualAcerto) || 0,
-    Number(s.tempos?.tempoMedioPorQuestaoMs) || 0,
-    s.respostasBonus?.bonus_1?.alternativaEscolhida || "",
-    s.respostasBonus?.bonus_2?.alternativaEscolhida || "",
-    s.desistencia?.motivoLabel || "",
-    s.desistencia?.telaOuQuestaoDeSaida || ""
-  ]);
+  const sessoesRows = sessoes.map((s, idx) => {
+    const q9Emo = s.respostasQuiz?.["9"]?.emotionLabel
+      ? `${s.respostasQuiz["9"].emotionScore} (${s.respostasQuiz["9"].emotionLabel})`
+      : "";
+    const q12Emo = s.respostasQuiz?.["12"]?.emotionLabel
+      ? `${s.respostasQuiz["12"].emotionScore} (${s.respostasQuiz["12"].emotionLabel})`
+      : "";
+    const q13Emo =
+      s.respostasBonus?.bonus_1?.emotionLabel || s.respostasQuiz?.["13"]?.emotionLabel
+        ? `${s.respostasBonus?.bonus_1?.emotionScore ?? s.respostasQuiz?.["13"]?.emotionScore} (${s.respostasBonus?.bonus_1?.emotionLabel || s.respostasQuiz?.["13"]?.emotionLabel})`
+        : "";
+    const q14Emo =
+      s.respostasBonus?.bonus_2?.emotionLabel || s.respostasQuiz?.["14"]?.emotionLabel
+        ? `${s.respostasBonus?.bonus_2?.emotionScore ?? s.respostasQuiz?.["14"]?.emotionScore} (${s.respostasBonus?.bonus_2?.emotionLabel || s.respostasQuiz?.["14"]?.emotionLabel})`
+        : "";
+
+    return [
+      s.sessionId || s.id,
+      s.status,
+      anonimizarNickname ? `Participante_${String(idx + 1).padStart(3, "0")}` : s.nickname || "Anônimo",
+      s.consentimento?.aceito ? "Sim" : "Não",
+      s.timestamps?.sessaoIniciadaEm || "",
+      s.sessaoFinalizadaEm || "",
+      Number(s.tempos?.duracaoTotalSegundos) || 0,
+      Number(s.desempenho?.questoesRespondidas) || 0,
+      Number(s.desempenho?.acertos) || 0,
+      Number(s.desempenho?.erros) || 0,
+      Number(s.desempenho?.percentualAcerto) || 0,
+      Number(s.tempos?.tempoMedioPorQuestaoMs) || 0,
+      q9Emo,
+      q12Emo,
+      s.respostasBonus?.bonus_1?.alternativaEscolhida || "",
+      q13Emo,
+      s.respostasBonus?.bonus_2?.alternativaEscolhida || "",
+      q14Emo,
+      s.desistencia?.motivoLabel || "",
+      s.desistencia?.telaOuQuestaoDeSaida || ""
+    ];
+  });
 
   // Aba 2: Estatísticas por Questão
   const questoesHeader = [
@@ -1200,6 +1203,7 @@ export function exportarPlanilhaExcel(sessoes = [], analitico, { anonimizarNickn
     "Erros",
     "Taxa de Acerto (%)",
     "Tempo Médio (s)",
+    "Média Emoção (1-5)",
     "Escolhas A",
     "Escolhas B",
     "Escolhas C"
@@ -1208,12 +1212,13 @@ export function exportarPlanilhaExcel(sessoes = [], analitico, { anonimizarNickn
     q.id,
     q.pergunta,
     q.categoriaNome,
-    q.correta,
+    q.correta || "Reflexão",
     q.respondidas,
     q.acertos,
     q.erros,
     q.taxaAcerto,
     q.tempoMedioSegundos,
+    q.mediaEmocao ?? "N/A",
     q.contagemOpcoes.A,
     q.contagemOpcoes.B,
     q.contagemOpcoes.C

@@ -164,6 +164,7 @@ export const quizQuestions = [
     id: 9,
     tipo: "conhecimento",
     categoria: "Bloco C: Plataformas na Prática",
+    medirEmocao: true,
     pergunta: "O que acontece com um perfil no Facebook ou Instagram após o falecimento do usuário?",
     imagem: "img/MemorialDigital2.png",
     alternativas: [
@@ -203,6 +204,7 @@ export const quizQuestions = [
     id: 12,
     tipo: "conhecimento",
     categoria: "Bloco C: Plataformas na Prática",
+    medirEmocao: true,
     pergunta: "O que pode ocorrer com os bens digitais de uma pessoa após sua morte?",
     imagem: "img/cross-01.png",
     alternativas: [
@@ -218,6 +220,7 @@ export const quizQuestions = [
     id: 13,
     tipo: "reflexao",
     categoria: "Bloco D: Sua Reflexão",
+    medirEmocao: true,
     pergunta: "Se alguém conhecesse você apenas pelo que está salvo nas suas contas hoje, o que descobriria?",
     imagem: "img/05 bots.jpg",
     alternativas: [
@@ -231,6 +234,7 @@ export const quizQuestions = [
     id: 14,
     tipo: "reflexao",
     categoria: "Bloco D: Sua Reflexão",
+    medirEmocao: true,
     pergunta: "Se você não pudesse acessar suas contas amanhã, o que gostaria que fosse feito com seus dados?",
     imagem: "img/novasoracoes.png",
     alternativas: [
@@ -253,6 +257,7 @@ export const QUIZ_QUESTIONS = quizQuestions.map((q) => {
 
   return {
     ...q,
+    medirEmocao: Boolean(q.medirEmocao),
     image: q.imagem || q.image,
     category: categoryKey,
     question: `${q.id}. ${q.pergunta}`,
