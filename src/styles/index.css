@@ -1609,6 +1609,24 @@ body::after {
   }
 }
 
+@keyframes streakPop {
+  0% {
+    opacity: 0;
+    transform: scale(0.75) translateY(4px);
+    box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.65);
+  }
+  55% {
+    opacity: 1;
+    transform: scale(1.1) translateY(-1px);
+    box-shadow: 0 0 0 8px rgba(249, 115, 22, 0);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+    box-shadow: 0 3px 10px rgba(234, 88, 12, 0.28);
+  }
+}
+
 .slide-in-fade {
   animation: slideInFade 0.32s cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -1649,12 +1667,82 @@ body::after {
   justify-content: space-between;
   align-items: center;
   gap: 8px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+}
+
+.gamified-meta-right {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.streak-badge-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+  border: 1.5px solid #fb923c;
+  color: #c2410c;
+  font-size: 0.84rem;
+  font-weight: 800;
+  white-space: nowrap;
+  animation: streakPop 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.streak-flame-icon {
+  font-size: 0.95rem;
+  line-height: 1;
+}
+
+.gamified-streak-bonus-note {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+  border: 1px solid #fdba74;
+  color: #c2410c;
+  font-size: 0.78rem;
+  font-weight: 800;
+  padding: 3px 9px;
+  border-radius: 999px;
+  white-space: nowrap;
+  animation: streakPop 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.completion-streak-banner {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+  border: 1.5px solid #fb923c;
+  color: #9a3412;
+  font-size: 0.98rem;
+  font-weight: 700;
+  box-shadow: 0 4px 14px rgba(234, 88, 12, 0.14);
+}
+
+.completion-streak-banner strong {
+  color: #c2410c;
+  font-weight: 900;
+}
+
+.completion-streak-flame {
+  font-size: 1.15rem;
 }
 
 .gamified-category-pill {
   padding: 5px 14px;
   font-size: 0.84rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .gamified-counter-badge {
@@ -2152,13 +2240,33 @@ body::after {
   }
 
   .gamified-category-pill {
-    font-size: 0.78rem;
-    padding: 5px 11px;
+    font-size: 0.72rem;
+    padding: 4px 9px;
+    max-width: 48vw;
+  }
+
+  .gamified-meta-right {
+    gap: 5px;
+  }
+
+  .streak-badge-pill {
+    font-size: 0.72rem;
+    padding: 4px 8px;
+    gap: 3px;
+  }
+
+  .streak-flame-icon {
+    font-size: 0.82rem;
+  }
+
+  .gamified-streak-bonus-note {
+    font-size: 0.68rem;
+    padding: 2px 7px;
   }
 
   .gamified-counter-badge {
-    font-size: 0.78rem;
-    padding: 5px 11px;
+    font-size: 0.73rem;
+    padding: 4px 9px;
   }
 
   .gamified-progress-track {

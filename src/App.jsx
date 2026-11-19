@@ -82,6 +82,10 @@ export function App() {
   const [userAnswers, setUserAnswers] = useState({}); // { [qId]: { selectedOpt, isCorrect, tempoRespostaMs, respondidaEm } }
   const [bonusAnswers, setBonusAnswers] = useState({});
 
+  // Sequência de Consciência (Answer Streak estilo Kahoot!)
+  const [streak, setStreak] = useState(0);
+  const [maxStreak, setMaxStreak] = useState(0);
+
   const [dropoutData, setDropoutData] = useState(null);
   const [sessionTimestamps, setSessionTimestamps] = useState(createInitialTimestamps);
   const [engajamento, setEngajamento] = useState(createInitialEngajamento);
@@ -149,6 +153,7 @@ export function App() {
             consentRecord,
             userAnswers,
             bonusAnswers,
+            maxStreak,
             totalQuizDurationSeconds,
             dropoutData: null,
             timestamps: timestampsFinais,
@@ -271,6 +276,20 @@ export function App() {
     const tipoQuestao = meta.tipo || questionObj?.tipo || 'conhecimento';
     const isReflexao = tipoQuestao === 'reflexao';
 
+    // Atualiza a Sequência de Consciência (streak & maxStreak):
+    // - tipo === "conhecimento" + correta === true: incrementa +1
+    // - tipo === "conhecimento" + correta === false: zera para 0
+    // - tipo === "reflexao" (Bloco D): Bônus de Reflexão, incrementa +1 e mantém a chama acesa
+    let computedStreakAfterAnswer = 0;
+    if (isReflexao || Boolean(isCorrect) === true) {
+      computedStreakAfterAnswer = streak + 1;
+      setStreak(computedStreakAfterAnswer);
+      setMaxStreak(prev => Math.max(prev, computedStreakAfterAnswer));
+    } else {
+      computedStreakAfterAnswer = 0;
+      setStreak(0);
+    }
+
     const answerPayload = {
       questionId: meta.questionId || `q${qId}`,
       selectedOption: selectedOpt,
@@ -280,6 +299,7 @@ export function App() {
       selectedOpt,
       tipo: tipoQuestao,
       isCorrect: isReflexao ? null : Boolean(isCorrect),
+      streakAtAnswer: computedStreakAfterAnswer,
       tempoRespostaMs: meta.tempoRespostaMs ?? Math.round(timeSpentSeconds * 1000),
       respondidaEm: meta.answeredAt || meta.respondidaEm || nowIso
     };
@@ -369,6 +389,7 @@ export function App() {
       consentRecord,
       userAnswers,
       bonusAnswers,
+      maxStreak,
       totalQuizDurationSeconds,
       dropoutData,
       timestamps: {
@@ -384,6 +405,7 @@ export function App() {
       sessionStartedAt: sessionTimestamps.sessaoIniciadaEm,
       sessionFinishedAt: structuredMetrics.sessaoFinalizadaEm,
       totalQuizDurationSeconds,
+      maxStreak,
       consent: consentRecord,
       dropout: dropoutData,
       score: {
@@ -418,6 +440,8 @@ export function App() {
     savedDropoutSessionRef.current = null;
     setCurrentQuestionIdx(0);
     setCurrentBonusIdx(0);
+    setStreak(0);
+    setMaxStreak(0);
     setSaveStatus({ loading: false, success: false, error: null });
     setCurrentScreen('LANDING');
   };
@@ -522,6 +546,8 @@ export function App() {
             currentIndex={currentQuestionIdx}
             totalQuestions={QUIZ_QUESTIONS.length}
             userAnswer={userAnswers[QUIZ_QUESTIONS[currentQuestionIdx].id]?.selectedOpt}
+            streak={streak}
+            maxStreak={maxStreak}
             onAnswer={handleAnswerQuestion}
             onNext={() => {
               if (currentQuestionIdx < QUIZ_QUESTIONS.length - 1) {
@@ -651,6 +677,7 @@ export function App() {
           <CompletionScreen 
             score={score}
             totalQuestions={totalKnowledgeQuestions}
+            maxStreak={maxStreak}
             nickname={nickname}
             onPlayAgain={handlePlayAgain}
             onOpenReview={handleOpenReview}

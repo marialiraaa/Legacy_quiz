@@ -8,6 +8,7 @@ export function QuizQuestion({
   onAnswer,
   onNext,
   userAnswer,
+  streak = 0,
   playClick,
   playCorrect,
   playIncorrect,
@@ -62,7 +63,7 @@ export function QuizQuestion({
     setSelectedOption(optId);
   };
 
-  // Etapa 2: Confirmação com feedback sensorial (áudio + vibração tátil + animação)
+  // Etapa 2: Confirmação com feedback sensorial (áudio + vibração tátil + animação + streak)
   const handleConfirmAnswer = () => {
     if (isConfirmed || !selectedOption) return;
 
@@ -79,7 +80,7 @@ export function QuizQuestion({
     let evaluatedCorrect = null;
 
     if (isReflection) {
-      // Pergunta reflexiva neutra: sem certo/errado e sem somar/descontar pontos
+      // Pergunta reflexiva neutra: sem certo/errado e mantém/incrementa a Sequência de Consciência
       evaluatedCorrect = null;
       playCorrect?.();
       if (typeof navigator !== 'undefined' && navigator.vibrate) {
@@ -126,7 +127,7 @@ export function QuizQuestion({
   return (
     <div className="screen-content gamified-quiz-screen">
       <div className={`gamified-quiz-card ${isConfirmed ? 'has-feedback-open' : ''}`}>
-        {/* 1. Barra de Progresso Gamificada no Topo + Indicador de Categoria/Bloco e Contagem */}
+        {/* 1. Barra de Progresso Gamificada no Topo + Categoria, Streak Badge e Contagem */}
         <div className="gamified-top-header">
           <div className="gamified-meta-row">
             <div
@@ -141,8 +142,25 @@ export function QuizQuestion({
               <span>{questionData.categoria || categoryInfo.name}</span>
             </div>
 
-            <div className="gamified-counter-badge">
-              Pergunta <strong>{currentIndex + 1}</strong> de <strong>{totalQuestions}</strong>
+            <div className="gamified-meta-right">
+              {/* Badge Gamificado: Sequência de Consciência (visível quando streak >= 2) */}
+              {streak >= 2 && (
+                <div
+                  key={`streak-${streak}`}
+                  className="streak-badge-pill"
+                  title={`Sequência de Consciência: ${streak} seguidas!`}
+                  aria-live="polite"
+                >
+                  <span className="streak-flame-icon" aria-hidden="true">
+                    🔥
+                  </span>
+                  <span>{streak} seguidas!</span>
+                </div>
+              )}
+
+              <div className="gamified-counter-badge">
+                Pergunta <strong>{currentIndex + 1}</strong> de <strong>{totalQuestions}</strong>
+              </div>
             </div>
           </div>
 
@@ -264,6 +282,11 @@ export function QuizQuestion({
                     ? 'Boa! Resposta correta.'
                     : 'Opa! Veja a explicação:'}
                 </span>
+                {isReflection && streak >= 2 && (
+                  <span className="gamified-streak-bonus-note">
+                    🔥 Bônus de reflexão! Sequência mantida ({streak} seguidas)
+                  </span>
+                )}
               </div>
               <p className="gamified-feedback-text">{feedbackText}</p>
             </div>

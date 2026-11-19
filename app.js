@@ -371,6 +371,8 @@
     const [consentRecord, setConsentRecord] = useState(null);
     const [userAnswers, setUserAnswers] = useState({});
     const [bonusAnswers, setBonusAnswers] = useState({});
+    const [streak, setStreak] = useState(0);
+    const [maxStreak, setMaxStreak] = useState(0);
 
     const [dropoutData, setDropoutData] = useState(null);
     const [muted, setMuted] = useState(false);
@@ -441,6 +443,8 @@
       setDropoutData(null);
       setCurrentQuestionIdx(0);
       setCurrentBonusIdx(0);
+      setStreak(0);
+      setMaxStreak(0);
       setCurrentScreen('LANDING');
     };
 
@@ -486,10 +490,19 @@
           currentIdx: currentQuestionIdx,
           total: QUIZ_QUESTIONS.length,
           savedAns: userAnswers[QUIZ_QUESTIONS[currentQuestionIdx].id],
+          streak,
           nickname: nickname,
           onAnswer: (qId, opt, isCorrect, meta = {}) => {
             const qObj = QUIZ_QUESTIONS.find(q => q.id === qId);
             const tipo = qObj?.tipo || 'conhecimento';
+            const isReflexao = tipo === 'reflexao';
+            if (isReflexao || Boolean(isCorrect) === true) {
+              const nextStreak = streak + 1;
+              setStreak(nextStreak);
+              setMaxStreak(m => Math.max(m, nextStreak));
+            } else {
+              setStreak(0);
+            }
             setUserAnswers(prev => ({
               ...prev,
               [qId]: {
@@ -500,7 +513,7 @@
                 answeredAt: meta.answeredAt || new Date().toISOString(),
                 selectedOpt: opt,
                 tipo,
-                isCorrect: tipo === 'reflexao' ? null : Boolean(isCorrect)
+                isCorrect: isReflexao ? null : Boolean(isCorrect)
               }
             }));
           },
@@ -563,6 +576,7 @@
         currentScreen === 'COMPLETION' && h(CompletionScreen, {
           score,
           total: totalKnowledgeQuestions,
+          maxStreak,
           nickname,
           onPlayAgain: restartGame,
           onReview: () => setShowReviewModal(true),
@@ -1046,7 +1060,7 @@
     );
   }
 
-  function QuizQuestionScreen({ question, currentIdx, total, savedAns, onAnswer, onNext, onPrev, sound, nickname, onExit }) {
+  function QuizQuestionScreen({ question, currentIdx, total, savedAns, streak = 0, onAnswer, onNext, onPrev, sound, nickname, onExit }) {
     const [selectedOption, setSelectedOption] = useState(savedAns ? savedAns.selectedOpt : null);
     const [isConfirmed, setIsConfirmed] = useState(Boolean(savedAns && savedAns.selectedOpt));
     const startTimeRef = useRef(Date.now());
@@ -1109,8 +1123,18 @@
               h('span', null, categoryInfo.icon),
               h('span', null, categoryInfo.name)
             ),
-            h('div', { className: 'gamified-counter-badge' },
-              'Pergunta ', h('strong', null, currentIdx + 1), ' de ', h('strong', null, total)
+            h('div', { className: 'gamified-meta-right' },
+              streak >= 2 && h('div', {
+                key: `streak-${streak}`,
+                className: 'streak-badge-pill',
+                title: `Sequência de Consciência: ${streak} seguidas!`
+              },
+                h('span', { className: 'streak-flame-icon' }, '🔥'),
+                h('span', null, `${streak} seguidas!`)
+              ),
+              h('div', { className: 'gamified-counter-badge' },
+                'Pergunta ', h('strong', null, currentIdx + 1), ' de ', h('strong', null, total)
+              )
             )
           ),
           h('div', { className: 'gamified-progress-track' },
@@ -1179,7 +1203,10 @@
             h('div', { className: 'gamified-feedback-header' },
               h('span', { className: 'gamified-feedback-icon' }, isReflection ? '✨' : isCorrect ? '🎉' : '💡'),
               h('span', { className: 'gamified-feedback-title' },
-                isReflection ? 'Reflexão sobre seu Legado Digital' : isCorrect ? 'Boa! Resposta correta.' : 'Opa! Veja a explicação:'
+                isReflection ? 'Reflexão Registrada' : isCorrect ? 'Boa! Resposta correta.' : 'Opa! Veja a explicação:'
+              ),
+              isReflection && streak >= 2 && h('span', { className: 'gamified-streak-bonus-note' },
+                `🔥 Bônus de reflexão! Sequência mantida (${streak} seguidas)`
               )
             ),
             h('p', { className: 'gamified-feedback-text' }, feedbackText)
@@ -1342,7 +1369,7 @@
   }
 
 
-  function CompletionScreen({ score, total, nickname, onPlayAgain, onReview, onExport, sound }) {
+  function CompletionScreen({ score, total, maxStreak = 0, nickname, onPlayAgain, onReview, onExport, sound }) {
     const pct = Math.round((score / total) * 100);
 
     return h('div', { className: 'screen-content' },
@@ -1359,6 +1386,13 @@
             className: 'laurel-img',
             onError: (e) => { e.currentTarget.src = 'assets/frame-245.png'; }
           })
+        ),
+        h('div', { className: 'completion-streak-banner' },
+          h('span', { className: 'completion-streak-flame' }, '🔥'),
+          h('span', { className: 'completion-streak-text' },
+            'Maior Sequência de Consciência: ',
+            h('strong', null, `${maxStreak} ${maxStreak === 1 ? 'questão' : 'seguidas'}`)
+          )
         ),
         h('div', { className: 'score-stats-grid' },
           h('div', { className: 'score-stat-box' },

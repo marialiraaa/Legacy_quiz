@@ -3,6 +3,7 @@ import React from 'react';
 export function CompletionScreen({
   score,
   totalQuestions,
+  maxStreak = 0,
   nickname,
   onPlayAgain,
   onOpenReview,
@@ -37,6 +38,17 @@ export function CompletionScreen({
           />
         </div>
 
+        {/* Destaque Gamificado: Maior Sequência de Consciência (Answer Streak) */}
+        <div className="completion-streak-banner">
+          <span className="completion-streak-flame" aria-hidden="true">🔥</span>
+          <span className="completion-streak-text">
+            Maior Sequência de Consciência:{' '}
+            <strong>
+              {maxStreak} {maxStreak === 1 ? 'questão' : 'seguidas'}
+            </strong>
+          </span>
+        </div>
+
         {/* Score Statistics */}
         <div className="score-stats-grid">
           <div className="score-stat-box">
@@ -52,11 +64,11 @@ export function CompletionScreen({
           </div>
 
           <div className="score-stat-box">
-            <div className="score-number" style={{ color: '#8b5cf6' }}>
-              🏅
+            <div className="score-number" style={{ color: '#ea580c' }}>
+              🔥 {maxStreak}
             </div>
             <div className="score-label">
-              {percentage >= 80 ? 'Mestre em Legado' : percentage >= 50 ? 'Consciente Digital' : 'Explorador Inicial'}
+              {percentage >= 80 ? 'Mestre em Legado' : percentage >= 50 ? 'Consciente Digital' : 'Sequência Máxima'}
             </div>
           </div>
         </div>

@@ -59,6 +59,8 @@ export function consolidarMetricasQuiz(userAnswers = {}) {
   let totalRespondidas = 0;
   let totalAcertos = 0;
   let totalErros = 0;
+  let currentStreak = 0;
+  let computedMaxStreak = 0;
   let somaTempoQuizMs = 0;
   let somaTempoQuizSegundos = 0;
   const startTimestampsMs = [];
@@ -71,6 +73,15 @@ export function consolidarMetricasQuiz(userAnswers = {}) {
 
     const isReflection = question.tipo === "reflexao" || ans.tipo === "reflexao";
     const acertou = isReflection ? null : Boolean(ans.isCorrect);
+
+    if (isReflection || acertou === true) {
+      currentStreak += 1;
+      if (currentStreak > computedMaxStreak) {
+        computedMaxStreak = currentStreak;
+      }
+    } else {
+      currentStreak = 0;
+    }
     const tempoMs =
       typeof ans.tempoRespostaMs === "number" && ans.tempoRespostaMs > 0
         ? ans.tempoRespostaMs
@@ -164,6 +175,7 @@ export function consolidarMetricasQuiz(userAnswers = {}) {
       acertos: totalAcertos,
       erros: totalErros,
       percentualAcerto,
+      maxStreak: computedMaxStreak,
       porCategoria
     },
     temposQuiz: {
@@ -244,6 +256,7 @@ export function construirPayloadSessao({
   consentRecord = null,
   userAnswers = {},
   bonusAnswers = {},
+  maxStreak = null,
   totalQuizDurationSeconds = null,
   dropoutData = null,
   timestamps = {},
@@ -266,6 +279,9 @@ export function construirPayloadSessao({
   );
 
   const { respostasQuiz, desempenho, temposQuiz } = consolidarMetricasQuiz(userAnswers);
+  if (typeof maxStreak === "number" && maxStreak > (desempenho.maxStreak || 0)) {
+    desempenho.maxStreak = maxStreak;
+  }
   const respostasBonus = consolidarRespostasBonus(bonusAnswers, userAnswers);
 
   const resolvedQuizDurationSeconds =
