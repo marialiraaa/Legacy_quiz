@@ -361,6 +361,7 @@ export const QUIZ_QUESTIONS = [
 export const BONUS_QUESTIONS = [
   {
     id: "bonus_1",
+    tipo: "reflexao",
     title: "Pergunta Bônus 1 (Pergunta 25)",
     question: "Se as pessoas conhecessem você apenas pelos conteúdos que deixou na internet, o que elas provavelmente aprenderiam sobre sua vida?",
     image: "img/pergunta25.png",
@@ -369,10 +370,12 @@ export const BONUS_QUESTIONS = [
       { id: "B", text: "Apenas parte de quem eu sou, pois muitas coisas importantes não estão registradas digitalmente." },
       { id: "C", text: "Não sei dizer, nunca parei para refletir sobre isso." }
     ],
-    reflection: "Esta reflexão destaca como a nossa pegada digital muitas vezes é apenas um recorte da nossa complexidade humana. O que escolhemos registrar ou omitir molda como as futuras gerações compreenderão a nossa história."
+    reflection: "Esta reflexão destaca como a nossa pegada digital muitas vezes é apenas um recorte da nossa complexidade humana. O que escolhemos registrar ou omitir molda como as futuras gerações compreenderão a nossa história.",
+    feedback: "Esta reflexão destaca como a nossa pegada digital muitas vezes é apenas um recorte da nossa complexidade humana. O que escolhemos registrar ou omitir molda como as futuras gerações compreenderão a nossa história."
   },
   {
     id: "bonus_2",
+    tipo: "reflexao",
     title: "Pergunta Bônus 2 (Pergunta 26)",
     question: "Se você não pudesse mais acessar suas contas digitais amanhã, suas pessoas de confiança saberiam como encontrar ou administrar os conteúdos que considera importantes?",
     image: "img/pergunta25.png",
@@ -381,6 +384,7 @@ export const BONUS_QUESTIONS = [
       { id: "B", text: "Talvez encontrassem algumas informações, mas não tudo." },
       { id: "C", text: "Não, nunca pensei sobre o que aconteceria com meus conteúdos digitais." }
     ],
-    reflection: "A vulnerabilidade digital é real: conversar abertamente com pessoas queridas sobre senhas mestras, contatos de legado e desejos póstumos é um ato de cuidado e responsabilidade com quem amamos."
+    reflection: "A vulnerabilidade digital é real: conversar abertamente com pessoas queridas sobre senhas mestras, contatos de legado e desejos póstumos é um ato de cuidado e responsabilidade com quem amamos.",
+    feedback: "A vulnerabilidade digital é real: conversar abertamente com pessoas queridas sobre senhas mestras, contatos de legado e desejos póstumos é um ato de cuidado e responsabilidade com quem amamos."
   }
 ];

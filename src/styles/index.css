@@ -1497,69 +1497,597 @@ body::after {
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
 }
 
-.options-row {
+/* ==========================================================================
+   === GAMIFIED QUESTION SCREEN (MICROINTERACTIONS & MOBILE-FIRST UX) ===
+   ========================================================================== */
+
+@keyframes slideInFade {
+  from {
+    opacity: 0;
+    transform: translateX(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideUpFade {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-7px); }
+  40% { transform: translateX(7px); }
+  60% { transform: translateX(-5px); }
+  80% { transform: translateX(5px); }
+}
+
+@keyframes correctPulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.45);
+  }
+  50% {
+    transform: scale(1.018);
+    box-shadow: 0 0 0 8px rgba(34, 197, 94, 0);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 4px 14px rgba(22, 163, 74, 0.18);
+  }
+}
+
+@keyframes reflectionGlow {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.45);
+  }
+  50% {
+    transform: scale(1.015);
+    box-shadow: 0 0 0 8px rgba(139, 92, 246, 0);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 4px 14px rgba(139, 92, 246, 0.2);
+  }
+}
+
+.slide-in-fade {
+  animation: slideInFade 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.slide-up-fade {
+  animation: slideUpFade 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.gamified-quiz-screen {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  padding: 6px 16px 20px;
+}
+
+.gamified-quiz-card {
+  width: 100%;
+  max-width: 780px;
+  margin: 0 auto;
   display: flex;
   flex-direction: column;
   gap: 14px;
-  margin-top: 8px;
+}
+
+/* 1. Barra de Progresso Gamificada no Topo */
+.gamified-top-header {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.gamified-meta-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.gamified-category-pill {
+  padding: 5px 14px;
+  font-size: 0.84rem;
+}
+
+.gamified-counter-badge {
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: #475569;
+  background: #f1f5f9;
+  padding: 5px 13px;
+  border-radius: 999px;
+  border: 1px solid #e2e8f0;
+}
+
+.gamified-counter-badge strong {
+  color: #1e2952;
+  font-weight: 800;
+}
+
+.gamified-progress-track {
+  width: 100%;
+  height: 10px;
+  background: #e2e8f0;
+  border-radius: 999px;
+  overflow: hidden;
+  box-shadow: inset 0 1px 3px rgba(15, 23, 42, 0.08);
+}
+
+.gamified-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #1e2952 0%, #2563eb 55%, #16a34a 100%);
+  border-radius: 999px;
+  transition: width 0.4s ease;
+}
+
+.gamified-progress-fill.reflection-fill {
+  background: linear-gradient(90deg, #6d28d9 0%, #8b5cf6 55%, #ec4899 100%);
+}
+
+/* 2. Palco da Questão e Alternativas */
+.gamified-question-stage {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.options-row {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+  margin-top: 2px;
   width: 100%;
 }
 
 .option-card {
   background: #ffffff;
-  border: 1.5px solid #cbd5e1;
-  border-radius: 18px;
-  padding: 16px 18px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  border: 2px solid #cbd5e1;
+  border-radius: 16px;
+  padding: 13px 16px;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 14px;
-  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  gap: 13px;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
   position: relative;
   text-align: left;
+  width: 100%;
 }
 
 .option-card:hover:not(:disabled) {
-  transform: translateY(-3px);
-  background: #ffffff;
-  box-shadow: 0 8px 20px rgba(37, 99, 235, 0.12);
   border-color: #3b82f6;
+  background: #f8fafc;
+  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.1);
 }
 
+/* Estado Selecionado (Antes de Confirmar): transform: scale(1.015) */
 .option-card.selected {
   background: #eff6ff !important;
-  border-color: #2563eb !important;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2), 0 8px 20px rgba(37, 99, 235, 0.12) !important;
-  transform: translateY(-2px) scale(1.01);
+  border: 2.5px solid #2563eb !important;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18), 0 8px 18px rgba(37, 99, 235, 0.12) !important;
+  transform: scale(1.015);
 }
 
 .option-card.selected .option-badge {
   background: #2563eb !important;
-  box-shadow: 0 0 12px rgba(37, 99, 235, 0.4);
+  box-shadow: 0 3px 10px rgba(37, 99, 235, 0.35);
+}
+
+.option-card.selected .option-text {
+  color: #1e2952;
+  font-weight: 700;
+}
+
+/* Estado Confirmado: CORRETO (Verde + Pulse) */
+.option-card.confirmed-correct {
+  background: #f0fdf4 !important;
+  border: 2.5px solid #16a34a !important;
+  animation: correctPulse 0.48s ease-out forwards;
+  cursor: default;
+}
+
+.option-card.confirmed-correct .option-badge {
+  background: #16a34a !important;
+  box-shadow: 0 3px 10px rgba(22, 163, 74, 0.35);
+}
+
+.option-card.confirmed-correct .option-text {
+  color: #14532d;
+  font-weight: 700;
+}
+
+.option-card.confirmed-correct .option-status-icon {
+  background: #16a34a;
+  border-color: #16a34a;
+  color: #ffffff;
+}
+
+/* Estado Confirmado: ERRADO (Vermelho + Shake) */
+.option-card.confirmed-wrong {
+  background: #fef2f2 !important;
+  border: 2.5px solid #dc2626 !important;
+  box-shadow: 0 4px 14px rgba(220, 38, 38, 0.14) !important;
+  animation: shake 0.42s ease-in-out;
+  cursor: default;
+}
+
+.option-card.confirmed-wrong .option-badge {
+  background: #dc2626 !important;
+  box-shadow: 0 3px 10px rgba(220, 38, 38, 0.35);
+}
+
+.option-card.confirmed-wrong .option-text {
+  color: #7f1d1d;
+  font-weight: 700;
+}
+
+.option-card.confirmed-wrong .option-status-icon {
+  background: #dc2626;
+  border-color: #dc2626;
+  color: #ffffff;
+}
+
+/* Estado Confirmado: REFLEXÃO (Azul/Roxo Neutro + Glow) */
+.option-card.confirmed-reflection {
+  background: #f5f3ff !important;
+  border: 2.5px solid #7c3aed !important;
+  animation: reflectionGlow 0.5s ease-out forwards;
+  cursor: default;
+}
+
+.option-card.confirmed-reflection .option-badge {
+  background: #7c3aed !important;
+  box-shadow: 0 3px 10px rgba(124, 58, 237, 0.35);
+}
+
+.option-card.confirmed-reflection .option-text {
+  color: #4c1d95;
+  font-weight: 700;
+}
+
+.option-card.confirmed-reflection .option-status-icon {
+  background: #7c3aed;
+  border-color: #7c3aed;
+  color: #ffffff;
+}
+
+/* Alternativas não escolhidas após confirmação */
+.option-card.confirmed-dimmed {
+  opacity: 0.62;
+  background: #f8fafc;
+  border-color: #e2e8f0;
+  cursor: default;
 }
 
 .option-badge {
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
+  width: 40px;
+  height: 40px;
+  border-radius: 11px;
   background: var(--badge-blue);
   color: #fff;
-  font-size: 1.25rem;
+  font-size: 1.15rem;
   font-weight: 800;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  box-shadow: 0 4px 10px rgba(79, 111, 181, 0.3);
+  box-shadow: 0 3px 8px rgba(79, 111, 181, 0.25);
+  transition: background-color 0.2s ease;
 }
 
 .option-text {
-  font-size: 1.1rem;
+  font-size: 1.04rem;
   font-weight: 500;
   color: #1e293b;
-  line-height: 1.45;
+  line-height: 1.4;
   flex: 1;
+}
+
+.option-status-icon,
+.option-select-check {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid #cbd5e1;
+  background: #f8fafc;
+  color: transparent;
+  font-size: 0.92rem;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.option-status-icon.visible,
+.option-select-check.visible {
+  background: #2563eb;
+  border-color: #2563eb;
+  color: #ffffff;
+  box-shadow: 0 3px 8px rgba(37, 99, 235, 0.3);
+  transform: scale(1.05);
+}
+
+/* 3. Card de Feedback Educativo (Balão de Dica / Explicação) */
+.gamified-feedback-balloon {
+  width: 100%;
+  border-radius: 16px;
+  padding: 13px 16px;
+  border-left: 5px solid #2563eb;
+  background: #f8fafc;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.gamified-feedback-balloon.tone-correct {
+  background: #f0fdf4;
+  border: 1.5px solid #bbf7d0;
+  border-left: 5px solid #16a34a;
+}
+
+.gamified-feedback-balloon.tone-wrong {
+  background: #fffbeb;
+  border: 1.5px solid #fde68a;
+  border-left: 5px solid #d97706;
+}
+
+.gamified-feedback-balloon.tone-reflection {
+  background: #f5f3ff;
+  border: 1.5px solid #ddd6fe;
+  border-left: 5px solid #7c3aed;
+}
+
+.gamified-feedback-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.gamified-feedback-icon {
+  font-size: 1.15rem;
+}
+
+.gamified-feedback-title {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #1e2952;
+}
+
+.gamified-feedback-balloon.tone-correct .gamified-feedback-title {
+  color: #166534;
+}
+
+.gamified-feedback-balloon.tone-wrong .gamified-feedback-title {
+  color: #92400e;
+}
+
+.gamified-feedback-balloon.tone-reflection .gamified-feedback-title {
+  color: #5b21b6;
+}
+
+.gamified-feedback-text {
+  font-size: 0.93rem;
+  line-height: 1.46;
+  color: #334155;
+  font-weight: 500;
+  margin: 0;
+}
+
+/* 4. Barra de Ação Fixa/Visível (Confirmar Resposta / Próxima Pergunta) */
+.gamified-action-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  margin-top: 4px;
+}
+
+.gamified-btn-primary,
+.btn-confirm-answer,
+.btn-next-question {
+  flex: 1;
+  padding: 14px 24px;
+  border-radius: 999px;
+  border: none;
+  font-family: var(--font-main);
+  font-size: 1.05rem;
+  font-weight: 800;
+  letter-spacing: 0.2px;
+  cursor: pointer;
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  text-align: center;
+}
+
+.btn-confirm-answer {
+  background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+  color: #ffffff;
+  box-shadow: 0 8px 20px rgba(22, 163, 74, 0.3);
+}
+
+.btn-confirm-answer:hover:not(:disabled) {
+  transform: translateY(-2px);
+  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+  box-shadow: 0 10px 24px rgba(22, 163, 74, 0.38);
+}
+
+.btn-confirm-answer:disabled {
+  background: #e2e8f0;
+  color: #94a3b8;
+  box-shadow: none;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-next-question {
+  background: linear-gradient(135deg, #1e2952 0%, #2563eb 100%);
+  color: #ffffff;
+  box-shadow: 0 8px 20px rgba(37, 99, 235, 0.3);
+  animation: slideUpFade 0.25s ease-out;
+}
+
+.btn-next-question:hover {
+  transform: translateY(-2px);
+  background: linear-gradient(135deg, #273b7d 0%, #1d4ed8 100%);
+  box-shadow: 0 10px 24px rgba(37, 99, 235, 0.38);
+}
+
+.gamified-btn-exit {
+  padding: 13px 16px;
+  border-radius: 999px;
+  border: 1.5px solid #cbd5e1;
+  background: #ffffff;
+  color: #475569;
+  font-family: var(--font-main);
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.gamified-btn-exit:hover {
+  background: #fee2e2;
+  color: #b91c1c;
+  border-color: #fca5a5;
+}
+
+/* Responsividade Mobile Compacta (Sem Rolagem Vertical Excessiva - 100dvh) */
+@media (max-width: 768px) {
+  .header-arch-container {
+    margin-bottom: 8px;
+    padding: 4px 10px 0;
+    gap: 6px;
+  }
+
+  .header-arch {
+    padding: 12px 16px 14px;
+    border-radius: 18px;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .header-arch h1,
+  .header-arch h2 {
+    font-size: 1.06rem;
+    line-height: 1.32;
+  }
+
+  .icon-btn {
+    width: 34px;
+    height: 34px;
+    font-size: 0.98rem;
+  }
+
+  .gamified-quiz-screen {
+    padding: 4px 12px 14px;
+    justify-content: space-between;
+  }
+
+  .gamified-quiz-card {
+    gap: 10px;
+  }
+
+  .gamified-category-pill {
+    font-size: 0.76rem;
+    padding: 4px 10px;
+  }
+
+  .gamified-counter-badge {
+    font-size: 0.78rem;
+    padding: 4px 10px;
+  }
+
+  .gamified-progress-track {
+    height: 8px;
+  }
+
+  .options-row {
+    gap: 9px;
+  }
+
+  .option-card {
+    padding: 11px 12px;
+    gap: 10px;
+    border-radius: 14px;
+  }
+
+  .option-badge {
+    width: 34px;
+    height: 34px;
+    font-size: 1rem;
+    border-radius: 9px;
+  }
+
+  .option-text {
+    font-size: 0.93rem;
+    line-height: 1.34;
+  }
+
+  .option-status-icon {
+    width: 24px;
+    height: 24px;
+    font-size: 0.82rem;
+  }
+
+  .gamified-feedback-balloon {
+    padding: 10px 13px;
+    border-radius: 13px;
+  }
+
+  .gamified-feedback-title {
+    font-size: 0.88rem;
+  }
+
+  .gamified-feedback-text {
+    font-size: 0.84rem;
+    line-height: 1.38;
+  }
+
+  .gamified-action-bar {
+    gap: 8px;
+    margin-top: 2px;
+  }
+
+  .gamified-btn-primary,
+  .btn-confirm-answer,
+  .btn-next-question {
+    padding: 13px 18px;
+    font-size: 0.96rem;
+  }
+
+  .gamified-btn-exit {
+    padding: 12px 13px;
+    font-size: 0.82rem;
+  }
 }
 
 .quiz-footer {

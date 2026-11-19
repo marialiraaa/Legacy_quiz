@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { CATEGORIES } from '../data/questions.js';
-import { FeedbackView } from './FeedbackView.jsx';
 
 export function QuizQuestion({
   questionData,
@@ -8,28 +7,54 @@ export function QuizQuestion({
   totalQuestions,
   onAnswer,
   onNext,
-  onPrev,
   userAnswer,
   playClick,
   playCorrect,
   playIncorrect,
-  nickname,
   onExit
 }) {
-  const [selectedOpt, setSelectedOpt] = useState(userAnswer || null);
+  const [selectedOption, setSelectedOption] = useState(userAnswer || null);
+  const [isConfirmed, setIsConfirmed] = useState(Boolean(userAnswer));
   const startTimeRef = useRef(Date.now());
-  const isAnswered = selectedOpt !== null;
-  const isCorrect = selectedOpt === questionData.correctAnswer;
-  const categoryInfo = CATEGORIES[questionData.category] || CATEGORIES.BASIC_CONCEPTS;
 
-  // Reinicia o contador de tempo automaticamente a cada mudança de questão
+  // Determina o tipo da pergunta ('conhecimento' vs 'reflexao')
+  const questionType =
+    questionData.tipo ||
+    (questionData.correctAnswer ? 'conhecimento' : 'reflexao');
+  const isReflection = questionType === 'reflexao';
+  const isCorrect = !isReflection && selectedOption === questionData.correctAnswer;
+  const isLastQuestion = currentIndex === totalQuestions - 1;
+
+  const categoryInfo = CATEGORIES[questionData.category] || CATEGORIES.BASIC_CONCEPTS;
+  const feedbackText =
+    questionData.feedback ||
+    questionData.complement ||
+    questionData.reflection ||
+    '';
+
+  const progressPercentage = Math.max(
+    5,
+    Math.round(((currentIndex + 1) / totalQuestions) * 100)
+  );
+
+  // Reinicia estados locais e o cronômetro a cada mudança de questão
   useEffect(() => {
-    setSelectedOpt(userAnswer || null);
+    setSelectedOption(userAnswer || null);
+    setIsConfirmed(Boolean(userAnswer));
     startTimeRef.current = Date.now();
   }, [questionData.id, currentIndex, userAnswer]);
 
+  // Etapa 1: Seleção sem validação imediata (Anti-Misclick)
   const handleSelectOption = (optId) => {
-    if (isAnswered) return;
+    if (isConfirmed) return;
+    playClick?.();
+    setSelectedOption(optId);
+  };
+
+  // Etapa 2: Confirmação com feedback sensorial (áudio + vibração tátil + animação)
+  const handleConfirmAnswer = () => {
+    if (isConfirmed || !selectedOption) return;
+
     const startTime = startTimeRef.current;
     const endTime = Date.now();
     const elapsedMs = Math.max(1, endTime - startTime);
@@ -37,144 +62,209 @@ export function QuizQuestion({
     const startedAt = new Date(startTime).toISOString();
     const answeredAt = new Date(endTime).toISOString();
 
-    setSelectedOpt(optId);
-    const correct = optId === questionData.correctAnswer;
-    if (correct) {
+    setIsConfirmed(true);
+
+    if (isReflection) {
       playCorrect?.();
+      if (typeof navigator !== 'undefined' && navigator.vibrate) {
+        navigator.vibrate(30);
+      }
     } else {
-      playIncorrect?.();
+      const right = selectedOption === questionData.correctAnswer;
+      if (right) {
+        playCorrect?.();
+        if (typeof navigator !== 'undefined' && navigator.vibrate) {
+          navigator.vibrate(50);
+        }
+      } else {
+        playIncorrect?.();
+        if (typeof navigator !== 'undefined' && navigator.vibrate) {
+          navigator.vibrate([40, 40, 40]);
+        }
+      }
     }
-    onAnswer(questionData.id, optId, correct, {
+
+    const correctFlag = isReflection
+      ? true
+      : selectedOption === questionData.correctAnswer;
+
+    onAnswer?.(questionData.id, selectedOption, correctFlag, {
       questionId: `q${questionData.id}`,
-      selectedOption: optId,
+      selectedOption,
       timeSpentSeconds,
       startedAt,
       answeredAt,
       tempoRespostaMs: elapsedMs,
-      respondidaEm: answeredAt
+      respondidaEm: answeredAt,
+      tipo: questionType
     });
   };
 
-  // If already answered, render the exact Reference Design Feedback Screen (Frame 222 / Frame 223)
-  if (isAnswered) {
-    return (
-      <div className="screen-content feedback-screen-wrapper">
-        <FeedbackView
-          isCorrect={isCorrect}
-          options={questionData.options}
-          correctAnswer={questionData.correctAnswer}
-          selectedAnswer={selectedOpt}
-          complementText={questionData.complement}
-          currentIndex={currentIndex}
-          totalQuestions={totalQuestions}
-          onPrev={() => {
-            playClick?.();
-            onExit?.();
-          }}
-          onNext={() => {
-            playClick?.();
-            onNext();
-          }}
-          canPrev={true}
-          canNext={true}
-          prevLabel="Sair do Jogo"
-          nextLabel="Próxima →"
-        />
-      </div>
-    );
-  }
+  // Etapa 3: Avançar para a próxima pergunta
+  const handleAdvance = () => {
+    playClick?.();
+    onNext?.();
+  };
 
-  // Unanswered State: Illustration and Interactive Options
   return (
-    <div className="screen-content">
-      {/* Meta Bar: Category Pill */}
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        maxWidth: '860px',
-        margin: '0 auto 10px',
-        width: '100%',
-        padding: '0 6px',
-        flexWrap: 'wrap',
-        gap: '8px'
-      }}>
-        <div className="category-pill" style={{ borderLeft: `4px solid ${categoryInfo.color}` }}>
-          <span>{categoryInfo.icon}</span>
-          <span>{categoryInfo.name}</span>
-        </div>
-      </div>
+    <div className="screen-content gamified-quiz-screen">
+      <div className="gamified-quiz-card">
+        {/* 1. Barra de Progresso Gamificada no Topo + Indicador de Categoria e Contagem */}
+        <div className="gamified-top-header">
+          <div className="gamified-meta-row">
+            <div
+              className="category-pill gamified-category-pill"
+              style={{ borderLeft: `4px solid ${categoryInfo.color}` }}
+            >
+              <span>{categoryInfo.icon}</span>
+              <span>{categoryInfo.name}</span>
+            </div>
 
-      <div className="quiz-unanswered-container">
-        {/* Question illustration if available */}
-        {questionData.image ? (
-          <div className="question-illustration-box">
-            <img 
-              src={questionData.image} 
-              alt="Ilustração da Pergunta" 
-              className="question-illustration-img"
+            <div className="gamified-counter-badge">
+              Pergunta <strong>{currentIndex + 1}</strong> de <strong>{totalQuestions}</strong>
+            </div>
+          </div>
+
+          <div
+            className="gamified-progress-track"
+            role="progressbar"
+            aria-valuenow={currentIndex + 1}
+            aria-valuemin={1}
+            aria-valuemax={totalQuestions}
+          >
+            <div
+              className="gamified-progress-fill"
+              style={{ width: `${progressPercentage}%` }}
             />
           </div>
-        ) : (
-          <div className="question-placeholder-box">
-            <span style={{ fontSize: '3.5rem' }}>{questionData.icon || categoryInfo.icon}</span>
-            <p style={{ marginTop: '8px', color: '#64748b', fontWeight: 600, fontSize: '0.95rem' }}>
-              Reflita sobre os aspectos conceituais e éticos desta questão
-            </p>
-          </div>
-        )}
+        </div>
 
-        {/* Unanswered Interactive Options */}
-        <div className="options-row">
-          {questionData.options.map((opt) => (
+        {/* 2. Corpo Animado da Questão (slideInFade a cada troca de índice/ID) */}
+        <div key={questionData.id} className="gamified-question-stage slide-in-fade">
+          {/* Lista de Alternativas */}
+          <div className="options-row gamified-options-list">
+            {questionData.options.map((opt) => {
+              const isSelected = selectedOption === opt.id;
+              const isRightOption =
+                !isReflection && opt.id === questionData.correctAnswer;
+
+              let stateClass = '';
+              let statusIcon = null;
+
+              if (!isConfirmed) {
+                if (isSelected) {
+                  stateClass = 'selected';
+                  statusIcon = '✓';
+                }
+              } else if (isReflection) {
+                if (isSelected) {
+                  stateClass = 'confirmed-reflection';
+                  statusIcon = '💬';
+                } else {
+                  stateClass = 'confirmed-dimmed';
+                }
+              } else {
+                if (isRightOption) {
+                  stateClass = 'confirmed-correct';
+                  statusIcon = '✓';
+                } else if (isSelected && !isRightOption) {
+                  stateClass = 'confirmed-wrong';
+                  statusIcon = '✕';
+                } else {
+                  stateClass = 'confirmed-dimmed';
+                }
+              }
+
+              return (
+                <button
+                  key={opt.id}
+                  type="button"
+                  className={`option-card gamified-option-card ${stateClass}`}
+                  onClick={() => handleSelectOption(opt.id)}
+                  disabled={isConfirmed}
+                  aria-pressed={isSelected}
+                >
+                  <div className="option-badge gamified-option-badge">
+                    {opt.id}
+                  </div>
+                  <div className="option-text gamified-option-text">
+                    {opt.text}
+                  </div>
+                  <div
+                    className={`option-status-icon ${statusIcon ? 'visible' : ''}`}
+                    aria-hidden="true"
+                  >
+                    {statusIcon}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* 3. Balão de Feedback Educativo (slideUpFade após confirmar) */}
+          {isConfirmed && feedbackText && (
+            <div
+              className={`gamified-feedback-balloon slide-up-fade ${
+                isReflection
+                  ? 'tone-reflection'
+                  : isCorrect
+                  ? 'tone-correct'
+                  : 'tone-wrong'
+              }`}
+              role="status"
+              aria-live="polite"
+            >
+              <div className="gamified-feedback-header">
+                <span className="gamified-feedback-icon">
+                  {isReflection ? '✨' : isCorrect ? '🎉' : '💡'}
+                </span>
+                <span className="gamified-feedback-title">
+                  {isReflection
+                    ? 'Reflexão sobre seu Legado Digital'
+                    : isCorrect
+                    ? 'Boa! Resposta correta.'
+                    : 'Opa! Veja a explicação:'}
+                </span>
+              </div>
+              <p className="gamified-feedback-text">{feedbackText}</p>
+            </div>
+          )}
+        </div>
+
+        {/* 4. Barra de Ação Fixa/Visível (Confirmar Resposta -> Próxima Pergunta) */}
+        <div className="gamified-action-bar">
+          {onExit && (
             <button
-              key={opt.id}
               type="button"
-              className="option-card"
+              className="gamified-btn-exit"
               onClick={() => {
                 playClick?.();
-                handleSelectOption(opt.id);
+                onExit();
               }}
-              style={{ width: '100%' }}
+              title="Sair do Jogo"
             >
-              <div className="option-badge">
-                {opt.id}
-              </div>
-              <div className="option-text">
-                {opt.text}
-              </div>
+              🚪 Sair
             </button>
-          ))}
-        </div>
-      </div>
+          )}
 
-      {/* Footer: Progress bar & Return button */}
-      <div className="quiz-footer">
-        <div className="feedback-progress-wrapper" style={{ maxWidth: '860px', margin: '0 auto', width: '100%' }}>
-          <div className="feedback-progress-track">
-            <div 
-              className="feedback-progress-fill"
-              style={{ width: `${Math.max(4, Math.round(((currentIndex + 1) / totalQuestions) * 100))}%` }}
-            />
-          </div>
-          <div className="feedback-progress-counter">
-            {currentIndex + 1}/{totalQuestions}
-          </div>
-        </div>
-
-        <div className="nav-buttons-row">
-          <button 
-            type="button"
-            className="feedback-nav-btn btn-exit-game"
-            onClick={() => {
-              playClick?.();
-              onExit?.();
-            }}
-            title="Sair do Jogo"
-          >
-            <span>🚪</span>
-            <span>Sair do Jogo</span>
-          </button>
+          {!isConfirmed ? (
+            <button
+              type="button"
+              className="btn-confirm-answer gamified-btn-primary"
+              disabled={selectedOption === null}
+              onClick={handleConfirmAnswer}
+            >
+              Confirmar Resposta
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="btn-next-question gamified-btn-primary"
+              onClick={handleAdvance}
+            >
+              {isLastQuestion ? 'Ver Resultado →' : 'Próxima Pergunta →'}
+            </button>
+          )}
         </div>
       </div>
     </div>

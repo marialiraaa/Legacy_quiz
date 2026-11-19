@@ -1174,220 +1174,153 @@
   }
 
   function QuizQuestionScreen({ question, currentIdx, total, savedAns, onAnswer, onNext, onPrev, sound, nickname, onExit }) {
-    const [selectedOpt, setSelectedOpt] = useState(savedAns ? savedAns.selectedOpt : null);
+    const [selectedOption, setSelectedOption] = useState(savedAns ? savedAns.selectedOpt : null);
+    const [isConfirmed, setIsConfirmed] = useState(Boolean(savedAns && savedAns.selectedOpt));
     const startTimeRef = useRef(Date.now());
-    const isAnswered = selectedOpt !== null;
-    const isCorrect = selectedOpt === question.correctAnswer;
+
+    const questionType = question.tipo || (question.correctAnswer ? 'conhecimento' : 'reflexao');
+    const isReflection = questionType === 'reflexao';
+    const isCorrect = !isReflection && selectedOption === question.correctAnswer;
+    const isLastQuestion = currentIdx === total - 1;
     const categoryInfo = CATEGORIES[question.category] || CATEGORIES.BASIC_CONCEPTS;
+    const feedbackText = question.feedback || question.complement || question.reflection || '';
+    const progressPct = Math.max(5, Math.round(((currentIdx + 1) / total) * 100));
 
     useEffect(() => {
-      setSelectedOpt(savedAns ? savedAns.selectedOpt : null);
+      setSelectedOption(savedAns ? savedAns.selectedOpt : null);
+      setIsConfirmed(Boolean(savedAns && savedAns.selectedOpt));
       startTimeRef.current = Date.now();
     }, [question.id, currentIdx, savedAns]);
 
-    const handleSelect = (optId) => {
-      if (isAnswered) return;
+    const handleSelectOption = (optId) => {
+      if (isConfirmed) return;
+      sound.playClick();
+      setSelectedOption(optId);
+    };
+
+    const handleConfirmAnswer = () => {
+      if (isConfirmed || !selectedOption) return;
       const startTime = startTimeRef.current;
       const endTime = Date.now();
       const timeSpentSeconds = Number(((endTime - startTime) / 1000).toFixed(2));
-      setSelectedOpt(optId);
-      const right = optId === question.correctAnswer;
-      if (right) sound.playCorrect();
-      else sound.playIncorrect();
-      onAnswer(question.id, optId, right, {
+      setIsConfirmed(true);
+
+      if (isReflection) {
+        sound.playCorrect();
+        if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(30);
+      } else {
+        const right = selectedOption === question.correctAnswer;
+        if (right) {
+          sound.playCorrect();
+          if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(50);
+        } else {
+          sound.playIncorrect();
+          if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate([40, 40, 40]);
+        }
+      }
+
+      onAnswer(question.id, selectedOption, isReflection ? true : selectedOption === question.correctAnswer, {
         questionId: `q${question.id}`,
-        selectedOption: optId,
+        selectedOption,
         timeSpentSeconds,
         startedAt: new Date(startTime).toISOString(),
         answeredAt: new Date(endTime).toISOString()
       });
     };
 
-    function LightbulbIcon() {
-      return h('svg', {
-        width: 24,
-        height: 24,
-        viewBox: '0 0 24 24',
-        fill: 'none',
-        stroke: '#ffffff',
-        strokeWidth: 2,
-        strokeLinecap: 'round',
-        strokeLinejoin: 'round',
-        style: { flexShrink: 0 }
-      },
-        h('line', { x1: 12, y1: 1, x2: 12, y2: 3 }),
-        h('line', { x1: 4.22, y1: 4.22, x2: 5.64, y2: 5.64 }),
-        h('line', { x1: 1, y1: 12, x2: 3, y2: 12 }),
-        h('line', { x1: 21, y1: 12, x2: 23, y2: 12 }),
-        h('line', { x1: 18.36, y1: 5.64, x2: 19.78, y2: 4.22 }),
-        h('path', { d: 'M9 18h6' }),
-        h('path', { d: 'M10 22h4' }),
-        h('path', { d: 'M15.09 14c.18-.98.65-1.74 1.41-2.5A6 6 0 1 0 7.5 11.5c.76.76 1.23 1.52 1.41 2.5h6.18z' })
-      );
-    }
+    return h('div', { className: 'screen-content gamified-quiz-screen' },
+      h('div', { className: 'gamified-quiz-card' },
+        h('div', { className: 'gamified-top-header' },
+          h('div', { className: 'gamified-meta-row' },
+            h('div', { className: 'category-pill gamified-category-pill', style: { borderLeft: `4px solid ${categoryInfo.color}` } },
+              h('span', null, categoryInfo.icon),
+              h('span', null, categoryInfo.name)
+            ),
+            h('div', { className: 'gamified-counter-badge' },
+              'Pergunta ', h('strong', null, currentIdx + 1), ' de ', h('strong', null, total)
+            )
+          ),
+          h('div', { className: 'gamified-progress-track' },
+            h('div', { className: 'gamified-progress-fill', style: { width: `${progressPct}%` } })
+          )
+        ),
+        h('div', { key: question.id, className: 'gamified-question-stage slide-in-fade' },
+          h('div', { className: 'options-row gamified-options-list' },
+            question.options.map(opt => {
+              const isSelected = selectedOption === opt.id;
+              const isRightOption = !isReflection && opt.id === question.correctAnswer;
+              let stateClass = '';
+              let statusIcon = null;
 
-    function renderFeedbackView({
-      headlineText,
-      isCorrect,
-      options,
-      correctAnswer,
-      selectedAnswer,
-      complementText,
-      complementTitle,
-      currentIndex,
-      totalQuestions,
-      onPrev,
-      onNext,
-      canPrev,
-      canNext,
-      prevLabel,
-      nextLabel
-    }) {
-      const defaultHeadline = isCorrect ? 'Boa! Resposta correta.' : 'Opa! Resposta incorreta.';
-      const displayHeadline = headlineText || defaultHeadline;
+              if (!isConfirmed) {
+                if (isSelected) {
+                  stateClass = 'selected';
+                  statusIcon = '✓';
+                }
+              } else if (isReflection) {
+                if (isSelected) {
+                  stateClass = 'confirmed-reflection';
+                  statusIcon = '💬';
+                } else {
+                  stateClass = 'confirmed-dimmed';
+                }
+              } else {
+                if (isRightOption) {
+                  stateClass = 'confirmed-correct';
+                  statusIcon = '✓';
+                } else if (isSelected && !isRightOption) {
+                  stateClass = 'confirmed-wrong';
+                  statusIcon = '✕';
+                } else {
+                  stateClass = 'confirmed-dimmed';
+                }
+              }
 
-      return h('div', { className: 'screen-content feedback-screen-wrapper' },
-        h('div', { className: 'quiz-feedback-container' },
-          h('div', { className: `feedback-headline ${isCorrect ? 'correct' : 'incorrect'}` }, displayHeadline),
-          h('div', { className: 'feedback-options-stack' },
-            options.map(opt => {
-              const isRight = opt.id === correctAnswer;
-              const isUser = opt.id === selectedAnswer;
-              let stateClass = 'state-neutral';
-              if (isRight) stateClass = 'state-correct';
-              else if (isUser) stateClass = 'state-incorrect';
-
-              const hasAttachedComp = isRight && Boolean(complementText);
-
-              return h('div', { key: opt.id, className: 'feedback-option-group' },
-                h('div', {
-                  className: `feedback-option-btn ${stateClass} ${hasAttachedComp ? 'has-attached-complement' : ''}`
-                },
-                  h('div', { className: 'feedback-option-badge' }, opt.id),
-                  h('div', { className: 'feedback-option-body' }, opt.text)
-                ),
-                hasAttachedComp && h('div', { className: 'feedback-complement-card' },
-                  h('div', { className: 'feedback-complement-header' },
-                    LightbulbIcon(),
-                    h('span', null, complementTitle || 'Complemento:')
-                  ),
-                  h('div', { className: 'feedback-complement-body' }, complementText)
-                )
+              return h('button', {
+                key: opt.id,
+                type: 'button',
+                className: `option-card gamified-option-card ${stateClass}`,
+                onClick: () => handleSelectOption(opt.id),
+                disabled: isConfirmed,
+                'aria-pressed': isSelected
+              },
+                h('div', { className: 'option-badge gamified-option-badge' }, opt.id),
+                h('div', { className: 'option-text gamified-option-text' }, opt.text),
+                h('div', { className: `option-status-icon ${statusIcon ? 'visible' : ''}` }, statusIcon)
               );
             })
           ),
-          h('div', { className: 'feedback-footer-container' },
-            h('div', { className: 'feedback-progress-wrapper' },
-              h('div', { className: 'feedback-progress-track' },
-                h('div', {
-                  className: 'feedback-progress-fill',
-                  style: { width: `${Math.max(4, Math.round(((currentIndex + 1) / totalQuestions) * 100))}%` }
-                })
-              ),
-              h('div', { className: 'feedback-progress-counter' }, `${currentIndex + 1}/${totalQuestions}`)
-            ),
-            h('div', { className: 'feedback-nav-buttons' },
-              h('button', {
-                type: 'button',
-                className: 'feedback-nav-btn',
-                onClick: onPrev,
-                disabled: !canPrev,
-                style: { opacity: canPrev ? 1 : 0.45, cursor: canPrev ? 'pointer' : 'not-allowed' }
-              }, prevLabel || 'Retornar'),
-              h('button', {
-                type: 'button',
-                className: 'feedback-nav-btn',
-                onClick: onNext,
-                disabled: !canNext,
-                style: { opacity: canNext ? 1 : 0.45, cursor: canNext ? 'pointer' : 'not-allowed' }
-              }, nextLabel || 'Próxima →')
-            )
-          )
-        )
-      );
-    }
-
-    if (isAnswered) {
-      return renderFeedbackView({
-        isCorrect,
-        options: question.options,
-        correctAnswer: question.correctAnswer,
-        selectedAnswer: selectedOpt,
-        complementText: question.complement,
-        currentIndex: currentIdx,
-        totalQuestions: total,
-        onPrev: () => { sound.playClick(); (onExit || onPrev)(); },
-        onNext: () => { sound.playClick(); onNext(); },
-        canPrev: true,
-        canNext: true,
-        prevLabel: 'Sair do Jogo',
-        nextLabel: 'Próxima →'
-      });
-    }
-
-    return h('div', { className: 'screen-content' },
-      h('div', {
-        style: {
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          maxWidth: 860,
-          margin: '0 auto 10px',
-          width: '100%',
-          padding: '0 6px',
-          flexWrap: 'wrap',
-          gap: 8
-        }
-      },
-        h('div', { className: 'category-pill', style: { borderLeft: `4px solid ${categoryInfo.color}` } },
-          h('span', null, categoryInfo.icon),
-          h('span', null, categoryInfo.name)
-        )
-      ),
-      h('div', { className: 'quiz-unanswered-container' },
-        question.image ? h('div', { className: 'question-illustration-box' },
-          h('img', {
-            src: question.image,
-            alt: 'Ilustração da pergunta',
-            className: 'question-illustration-img',
-            onError: (e) => { e.currentTarget.src = 'assets/frame-219.png'; }
-          })
-        ) : h('div', { className: 'question-placeholder-box' },
-          h('span', { style: { fontSize: '3.5rem' } }, question.icon || categoryInfo.icon),
-          h('p', { style: { marginTop: 8, color: '#64748b', fontWeight: 600 } },
-            'Reflita sobre os aspectos conceituais desta questão'
-          )
-        ),
-        h('div', { className: 'options-row' },
-          question.options.map(opt => h('button', {
-            key: opt.id,
-            type: 'button',
-            className: 'option-card',
-            onClick: () => { sound.playClick(); handleSelect(opt.id); },
-            style: { width: '100%' }
+          isConfirmed && feedbackText && h('div', {
+            className: `gamified-feedback-balloon slide-up-fade ${isReflection ? 'tone-reflection' : isCorrect ? 'tone-correct' : 'tone-wrong'}`
           },
-            h('div', { className: 'option-badge' }, opt.id),
-            h('div', { className: 'option-text' }, opt.text)
-          ))
-        )
-      ),
-      h('div', { className: 'quiz-footer' },
-        h('div', { className: 'feedback-progress-wrapper', style: { maxWidth: 860, margin: '0 auto', width: '100%' } },
-          h('div', { className: 'feedback-progress-track' },
-            h('div', { className: 'feedback-progress-fill', style: { width: `${Math.max(4, Math.round(((currentIdx + 1) / total) * 100))}%` } })
-          ),
-          h('div', { className: 'feedback-progress-counter' }, `${currentIdx + 1}/${total}`)
+            h('div', { className: 'gamified-feedback-header' },
+              h('span', { className: 'gamified-feedback-icon' }, isReflection ? '✨' : isCorrect ? '🎉' : '💡'),
+              h('span', { className: 'gamified-feedback-title' },
+                isReflection ? 'Reflexão sobre seu Legado Digital' : isCorrect ? 'Boa! Resposta correta.' : 'Opa! Veja a explicação:'
+              )
+            ),
+            h('p', { className: 'gamified-feedback-text' }, feedbackText)
+          )
         ),
-        h('div', { className: 'nav-buttons-row' },
+        h('div', { className: 'gamified-action-bar' },
           h('button', {
             type: 'button',
-            className: 'feedback-nav-btn btn-exit-game',
+            className: 'gamified-btn-exit',
             onClick: () => { sound.playClick(); (onExit || onPrev)(); },
             title: 'Sair do Jogo'
-          },
-            h('span', null, '🚪'),
-            h('span', null, 'Sair do Jogo')
-          )
+          }, '🚪 Sair'),
+          !isConfirmed
+            ? h('button', {
+                type: 'button',
+                className: 'btn-confirm-answer gamified-btn-primary',
+                disabled: selectedOption === null,
+                onClick: handleConfirmAnswer
+              }, 'Confirmar Resposta')
+            : h('button', {
+                type: 'button',
+                className: 'btn-next-question gamified-btn-primary',
+                onClick: () => { sound.playClick(); onNext(); }
+              }, isLastQuestion ? 'Ver Resultado →' : 'Próxima Pergunta →')
         )
       )
     );
@@ -1416,73 +1349,110 @@
   }
 
   function BonusQuestionScreen({ bonusData, currentIdx, total, savedAns, onAnswer, onNext, onPrev, sound, onExit }) {
-    const [selected, setSelected] = useState(savedAns || null);
+    const [selectedOption, setSelectedOption] = useState(savedAns || null);
+    const [isConfirmed, setIsConfirmed] = useState(false);
+    const isLastBonus = currentIdx === total - 1;
+    const feedbackText = bonusData.feedback || bonusData.reflection || 'Obrigado por compartilhar sua reflexão sobre seu legado digital.';
+    const progressPct = Math.max(10, Math.round(((currentIdx + 1) / total) * 100));
 
     useEffect(() => {
-      setSelected(savedAns || null);
-    }, [bonusData.id, savedAns]);
+      setSelectedOption(savedAns || null);
+      setIsConfirmed(false);
+    }, [bonusData.id, currentIdx, savedAns]);
 
-    const handleSelect = (optId) => {
-      if (selected) return;
-      setSelected(optId);
+    const handleSelectOption = (optId) => {
+      if (isConfirmed) return;
       sound.playClick();
-      sound.playCorrect();
-      onAnswer(bonusData.id, optId);
-      setTimeout(() => {
-        onNext();
-      }, 280);
+      setSelectedOption(optId);
     };
 
-    return h('div', { className: 'screen-content' },
-      h('div', { style: { display: 'flex', justifyContent: 'center', marginBottom: 12 } },
-        h('div', { className: 'category-pill', style: { background: '#fef3c7', color: '#92400e', borderLeft: '4px solid #f59e0b' } },
-          h('span', null, '✨'),
-          h('span', null, bonusData.title)
-        )
-      ),
-      h('div', { className: 'quiz-unanswered-container' },
-        bonusData.image && h('div', { className: 'question-illustration-box', style: { borderColor: '#818cf8', maxWidth: 720 } },
-          h('img', {
-            src: bonusData.image,
-            alt: 'Ilustração Bônus',
-            className: 'question-illustration-img',
-            onError: (e) => { e.currentTarget.src = currentIdx === 0 ? 'assets/frame-235.png' : 'assets/frame-233.png'; }
-          })
-        ),
-        h('div', { className: 'options-row', style: { marginTop: 16 } },
-          bonusData.options.map(opt => {
-            const isSelected = selected === opt.id;
-            return h('button', {
-              key: opt.id,
-              type: 'button',
-              className: `option-card ${isSelected ? 'selected' : ''}`,
-              onClick: () => handleSelect(opt.id),
-              disabled: selected !== null,
-              style: { width: '100%' }
-            },
-              h('div', { className: 'option-badge' }, opt.id),
-              h('div', { className: 'option-text' }, opt.text)
-            );
-          })
-        )
-      ),
-      h('div', { className: 'quiz-footer' },
-        h('div', { className: 'feedback-progress-wrapper', style: { maxWidth: 860, margin: '0 auto', width: '100%' } },
-          h('div', { className: 'feedback-progress-track' },
-            h('div', { className: 'feedback-progress-fill', style: { width: `${Math.max(4, Math.round(((currentIdx + 1) / total) * 100))}%` } })
+    const handleConfirmBonus = () => {
+      if (isConfirmed || !selectedOption) return;
+      setIsConfirmed(true);
+      sound.playClick();
+      sound.playCorrect();
+      if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(30);
+      onAnswer(bonusData.id, selectedOption);
+    };
+
+    return h('div', { className: 'screen-content gamified-quiz-screen' },
+      h('div', { className: 'gamified-quiz-card' },
+        h('div', { className: 'gamified-top-header' },
+          h('div', { className: 'gamified-meta-row' },
+            h('div', { className: 'category-pill gamified-category-pill', style: { background: '#f5f3ff', color: '#6d28d9', borderLeft: '4px solid #8b5cf6' } },
+              h('span', null, '✨'),
+              h('span', null, bonusData.title || 'Reflexão Pessoal')
+            ),
+            h('div', { className: 'gamified-counter-badge' },
+              'Reflexão ', h('strong', null, currentIdx + 1), ' de ', h('strong', null, total)
+            )
           ),
-          h('div', { className: 'feedback-progress-counter' }, `Bônus ${currentIdx + 1}/${total}`)
+          h('div', { className: 'gamified-progress-track' },
+            h('div', { className: 'gamified-progress-fill reflection-fill', style: { width: `${progressPct}%` } })
+          )
         ),
-        h('div', { className: 'nav-buttons-row' },
+        h('div', { key: bonusData.id, className: 'gamified-question-stage slide-in-fade' },
+          h('div', { className: 'options-row gamified-options-list' },
+            bonusData.options.map(opt => {
+              const isSelected = selectedOption === opt.id;
+              let stateClass = '';
+              let statusIcon = null;
+
+              if (!isConfirmed) {
+                if (isSelected) {
+                  stateClass = 'selected';
+                  statusIcon = '✓';
+                }
+              } else {
+                if (isSelected) {
+                  stateClass = 'confirmed-reflection';
+                  statusIcon = '💬';
+                } else {
+                  stateClass = 'confirmed-dimmed';
+                }
+              }
+
+              return h('button', {
+                key: opt.id,
+                type: 'button',
+                className: `option-card gamified-option-card ${stateClass}`,
+                onClick: () => handleSelectOption(opt.id),
+                disabled: isConfirmed,
+                'aria-pressed': isSelected
+              },
+                h('div', { className: 'option-badge gamified-option-badge' }, opt.id),
+                h('div', { className: 'option-text gamified-option-text' }, opt.text),
+                h('div', { className: `option-status-icon ${statusIcon ? 'visible' : ''}` }, statusIcon)
+              );
+            })
+          ),
+          isConfirmed && feedbackText && h('div', { className: 'gamified-feedback-balloon slide-up-fade tone-reflection' },
+            h('div', { className: 'gamified-feedback-header' },
+              h('span', { className: 'gamified-feedback-icon' }, '💬'),
+              h('span', { className: 'gamified-feedback-title' }, 'Reflexão Registrada')
+            ),
+            h('p', { className: 'gamified-feedback-text' }, feedbackText)
+          )
+        ),
+        h('div', { className: 'gamified-action-bar' },
           h('button', {
             type: 'button',
-            className: 'feedback-nav-btn btn-exit-game',
+            className: 'gamified-btn-exit',
             onClick: () => { sound.playClick(); (onExit || onPrev)(); },
             title: 'Sair do Jogo'
-          },
-            h('span', null, '🚪'),
-            h('span', null, 'Sair do Jogo')
-          )
+          }, '🚪 Sair'),
+          !isConfirmed
+            ? h('button', {
+                type: 'button',
+                className: 'btn-confirm-answer gamified-btn-primary',
+                disabled: selectedOption === null,
+                onClick: handleConfirmBonus
+              }, 'Confirmar Resposta')
+            : h('button', {
+                type: 'button',
+                className: 'btn-next-question gamified-btn-primary',
+                onClick: () => { sound.playClick(); onNext(); }
+              }, isLastBonus ? 'Ver Resultado 🏆' : 'Próxima Pergunta →')
         )
       )
     );
