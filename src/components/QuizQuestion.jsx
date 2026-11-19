@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { CATEGORIES } from '../data/questions.js';
+import { getCategoryInfo } from '../data/questions.js';
 
 export function QuizQuestion({
   questionData,
@@ -17,15 +17,25 @@ export function QuizQuestion({
   const [isConfirmed, setIsConfirmed] = useState(Boolean(userAnswer));
   const startTimeRef = useRef(Date.now());
 
-  // Determina o tipo da pergunta ('conhecimento' vs 'reflexao')
+  // Suporta tanto o formato novo (alternativas/texto/correta/pergunta/categoria) quanto o legado
+  const alternatives = questionData.alternativas || questionData.options || [];
   const questionType =
     questionData.tipo ||
     (questionData.correctAnswer ? 'conhecimento' : 'reflexao');
   const isReflection = questionType === 'reflexao';
-  const isCorrect = !isReflection && selectedOption === questionData.correctAnswer;
+
+  // Descobre o ID da alternativa correta quando tipo === "conhecimento"
+  const correctOptionObj = alternatives.find((a) => a.correta === true);
+  const correctOptionId = isReflection
+    ? null
+    : correctOptionObj?.id || questionData.correctAnswer || null;
+
+  const isCorrect = !isReflection && selectedOption === correctOptionId;
   const isLastQuestion = currentIndex === totalQuestions - 1;
 
-  const categoryInfo = CATEGORIES[questionData.category] || CATEGORIES.BASIC_CONCEPTS;
+  const categoryInfo = getCategoryInfo(
+    questionData.categoria || questionData.category
+  );
   const feedbackText =
     questionData.feedback ||
     questionData.complement ||
@@ -64,14 +74,23 @@ export function QuizQuestion({
 
     setIsConfirmed(true);
 
+    const selectedAltObj = alternatives.find((a) => a.id === selectedOption);
+    let evaluatedCorrect = null;
+
     if (isReflection) {
+      // Pergunta reflexiva neutra: sem certo/errado e sem somar/descontar pontos
+      evaluatedCorrect = null;
       playCorrect?.();
       if (typeof navigator !== 'undefined' && navigator.vibrate) {
         navigator.vibrate(30);
       }
     } else {
-      const right = selectedOption === questionData.correctAnswer;
-      if (right) {
+      evaluatedCorrect =
+        typeof selectedAltObj?.correta === 'boolean'
+          ? selectedAltObj.correta
+          : selectedOption === correctOptionId;
+
+      if (evaluatedCorrect) {
         playCorrect?.();
         if (typeof navigator !== 'undefined' && navigator.vibrate) {
           navigator.vibrate(50);
@@ -84,11 +103,7 @@ export function QuizQuestion({
       }
     }
 
-    const correctFlag = isReflection
-      ? true
-      : selectedOption === questionData.correctAnswer;
-
-    onAnswer?.(questionData.id, selectedOption, correctFlag, {
+    onAnswer?.(questionData.id, selectedOption, evaluatedCorrect, {
       questionId: `q${questionData.id}`,
       selectedOption,
       timeSpentSeconds,
@@ -96,7 +111,8 @@ export function QuizQuestion({
       answeredAt,
       tempoRespostaMs: elapsedMs,
       respondidaEm: answeredAt,
-      tipo: questionType
+      tipo: questionType,
+      categoria: questionData.categoria || categoryInfo.name
     });
   };
 
@@ -109,15 +125,19 @@ export function QuizQuestion({
   return (
     <div className="screen-content gamified-quiz-screen">
       <div className="gamified-quiz-card">
-        {/* 1. Barra de Progresso Gamificada no Topo + Indicador de Categoria e Contagem */}
+        {/* 1. Barra de Progresso Gamificada no Topo + Indicador de Categoria/Bloco e Contagem */}
         <div className="gamified-top-header">
           <div className="gamified-meta-row">
             <div
               className="category-pill gamified-category-pill"
-              style={{ borderLeft: `4px solid ${categoryInfo.color}` }}
+              style={{
+                borderLeft: `4px solid ${categoryInfo.color}`,
+                background: isReflection ? '#f5f3ff' : undefined,
+                color: isReflection ? '#6d28d9' : undefined
+              }}
             >
               <span>{categoryInfo.icon}</span>
-              <span>{categoryInfo.name}</span>
+              <span>{questionData.categoria || categoryInfo.name}</span>
             </div>
 
             <div className="gamified-counter-badge">
@@ -133,7 +153,7 @@ export function QuizQuestion({
             aria-valuemax={totalQuestions}
           >
             <div
-              className="gamified-progress-fill"
+              className={`gamified-progress-fill ${isReflection ? 'reflection-fill' : ''}`}
               style={{ width: `${progressPercentage}%` }}
             />
           </div>
@@ -143,10 +163,12 @@ export function QuizQuestion({
         <div key={questionData.id} className="gamified-question-stage slide-in-fade">
           {/* Lista de Alternativas */}
           <div className="options-row gamified-options-list">
-            {questionData.options.map((opt) => {
+            {alternatives.map((opt) => {
               const isSelected = selectedOption === opt.id;
               const isRightOption =
-                !isReflection && opt.id === questionData.correctAnswer;
+                !isReflection &&
+                (opt.correta === true || opt.id === correctOptionId);
+              const optText = opt.texto || opt.text;
 
               let stateClass = '';
               let statusIcon = null;
@@ -188,7 +210,7 @@ export function QuizQuestion({
                     {opt.id}
                   </div>
                   <div className="option-text gamified-option-text">
-                    {opt.text}
+                    {optText}
                   </div>
                   <div
                     className={`option-status-icon ${statusIcon ? 'visible' : ''}`}
@@ -220,7 +242,7 @@ export function QuizQuestion({
                 </span>
                 <span className="gamified-feedback-title">
                   {isReflection
-                    ? 'Reflexão sobre seu Legado Digital'
+                    ? 'Reflexão Registrada'
                     : isCorrect
                     ? 'Boa! Resposta correta.'
                     : 'Opa! Veja a explicação:'}
@@ -262,7 +284,7 @@ export function QuizQuestion({
               className="btn-next-question gamified-btn-primary"
               onClick={handleAdvance}
             >
-              {isLastQuestion ? 'Ver Resultado →' : 'Próxima Pergunta →'}
+              {isLastQuestion ? 'Ver Resultado 🏆' : 'Próxima Pergunta →'}
             </button>
           )}
         </div>

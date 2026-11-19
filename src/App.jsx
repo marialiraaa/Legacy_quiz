@@ -193,9 +193,17 @@ export function App() {
     }));
   }, [rawToggleMute, registrarInteracaoEngajamento]);
 
-  // Calculated Score
+  // Total de questões pontuáveis (apenas tipo === "conhecimento")
+  const totalKnowledgeQuestions = useMemo(() => {
+    const count = QUIZ_QUESTIONS.filter(q => q.tipo === 'conhecimento').length;
+    return count > 0 ? count : QUIZ_QUESTIONS.length;
+  }, []);
+
+  // Calculated Score (soma apenas questões de conhecimento com correta: true)
   const score = useMemo(() => {
-    return Object.values(userAnswers).filter(a => a.isCorrect).length;
+    return Object.values(userAnswers).filter(
+      a => a.tipo !== 'reflexao' && a.isCorrect === true
+    ).length;
   }, [userAnswers]);
 
   // Tempo total gasto nas questões do quiz (em segundos, com precisão de 2 casas decimais)
@@ -251,7 +259,7 @@ export function App() {
     }
   }, [currentScreen, currentQuestionIdx, currentBonusIdx]);
 
-  // Answer handler for Core Quiz (inclui tempo de resposta em segundos e timestamps de início/fim)
+  // Answer handler for Core Quiz (respeita tipo === "conhecimento" vs "reflexao")
   const handleAnswerQuestion = (qId, selectedOpt, isCorrect, meta = {}) => {
     const nowIso = new Date().toISOString();
     const timeSpentSeconds =
@@ -259,20 +267,52 @@ export function App() {
         ? meta.timeSpentSeconds
         : Number((((meta.tempoRespostaMs || 0) / 1000)).toFixed(2));
 
+    const questionObj = QUIZ_QUESTIONS.find(q => q.id === qId);
+    const tipoQuestao = meta.tipo || questionObj?.tipo || 'conhecimento';
+    const isReflexao = tipoQuestao === 'reflexao';
+
+    const answerPayload = {
+      questionId: meta.questionId || `q${qId}`,
+      selectedOption: selectedOpt,
+      timeSpentSeconds,
+      startedAt: meta.startedAt || nowIso,
+      answeredAt: meta.answeredAt || meta.respondidaEm || nowIso,
+      selectedOpt,
+      tipo: tipoQuestao,
+      isCorrect: isReflexao ? null : Boolean(isCorrect),
+      tempoRespostaMs: meta.tempoRespostaMs ?? Math.round(timeSpentSeconds * 1000),
+      respondidaEm: meta.answeredAt || meta.respondidaEm || nowIso
+    };
+
     setUserAnswers(prev => ({
       ...prev,
-      [qId]: {
-        questionId: meta.questionId || `q${qId}`,
-        selectedOption: selectedOpt,
-        timeSpentSeconds,
-        startedAt: meta.startedAt || nowIso,
-        answeredAt: meta.answeredAt || meta.respondidaEm || nowIso,
-        selectedOpt,
-        isCorrect,
-        tempoRespostaMs: meta.tempoRespostaMs ?? Math.round(timeSpentSeconds * 1000),
-        respondidaEm: meta.answeredAt || meta.respondidaEm || nowIso
-      }
+      [qId]: answerPayload
     }));
+
+    // Se for questão reflexiva (Bloco D: questões 13 e 14), sincroniza também em bonusAnswers para os relatórios do Firestore
+    if (isReflexao) {
+      setSessionTimestamps(prev => ({
+        ...prev,
+        bonusIniciadoEm: prev.bonusIniciadoEm || meta.startedAt || nowIso
+      }));
+      const reflexaoQuestions = QUIZ_QUESTIONS.filter(q => q.tipo === 'reflexao');
+      const reflexaoIdx = reflexaoQuestions.findIndex(q => q.id === qId);
+      const bonusKey = reflexaoIdx >= 0 ? `bonus_${reflexaoIdx + 1}` : `bonus_${qId}`;
+
+      setBonusAnswers(prev => ({
+        ...prev,
+        [bonusKey]: {
+          questionId: bonusKey,
+          selectedOption: selectedOpt,
+          timeSpentSeconds,
+          startedAt: meta.startedAt || nowIso,
+          answeredAt: meta.answeredAt || meta.respondidaEm || nowIso,
+          selectedOpt,
+          tempoRespostaMs: meta.tempoRespostaMs ?? Math.round(timeSpentSeconds * 1000),
+          respondidaEm: meta.answeredAt || meta.respondidaEm || nowIso
+        }
+      }));
+    }
   };
 
   // Answer handler for Bonus Questions (inclui tempo de resposta em segundos e timestamps de início/fim)
@@ -348,8 +388,8 @@ export function App() {
       dropout: dropoutData,
       score: {
         totalCorrect: score,
-        totalQuestions: QUIZ_QUESTIONS.length,
-        percentage: Math.round((score / QUIZ_QUESTIONS.length) * 100)
+        totalQuestions: totalKnowledgeQuestions,
+        percentage: Math.round((score / totalKnowledgeQuestions) * 100)
       },
       answers: userAnswers,
       bonusAnswers,
@@ -487,7 +527,8 @@ export function App() {
               if (currentQuestionIdx < QUIZ_QUESTIONS.length - 1) {
                 setCurrentQuestionIdx(idx => idx + 1);
               } else {
-                setCurrentScreen('BONUS_INTRO');
+                playFanfare();
+                setCurrentScreen('COMPLETION');
               }
             }}
             onExit={handleRequestExit}
@@ -609,7 +650,7 @@ export function App() {
         {currentScreen === 'COMPLETION' && (
           <CompletionScreen 
             score={score}
-            totalQuestions={QUIZ_QUESTIONS.length}
+            totalQuestions={totalKnowledgeQuestions}
             nickname={nickname}
             onPlayAgain={handlePlayAgain}
             onOpenReview={handleOpenReview}

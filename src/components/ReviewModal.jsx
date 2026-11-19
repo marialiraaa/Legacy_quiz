@@ -6,9 +6,10 @@ export function ReviewModal({ userAnswers, onClose, playClick, onFilterChange })
   const [filter, setFilter] = useState('ALL'); // 'ALL' | 'CORRECT' | 'INCORRECT'
 
   const filteredQuestions = QUIZ_QUESTIONS.filter(q => {
-    const isCorrect = userAnswers[q.id]?.isCorrect;
-    if (filter === 'CORRECT') return isCorrect;
-    if (filter === 'INCORRECT') return !isCorrect;
+    const isReflection = q.tipo === 'reflexao';
+    const isCorrect = userAnswers[q.id]?.isCorrect === true;
+    if (filter === 'CORRECT') return !isReflection && isCorrect;
+    if (filter === 'INCORRECT') return !isReflection && !isCorrect;
     return true;
   });
 
@@ -73,8 +74,32 @@ export function ReviewModal({ userAnswers, onClose, playClick, onFilterChange })
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           {filteredQuestions.map(q => {
             const ans = userAnswers[q.id];
-            const isCorrect = ans?.isCorrect;
-            const chosenId = ans?.selectedOpt;
+            const isReflection = q.tipo === 'reflexao';
+            const isCorrect = !isReflection && ans?.isCorrect === true;
+            const chosenId = ans?.selectedOption || ans?.selectedOpt;
+            const alternatives = q.alternativas || q.options || [];
+            const feedbackText = q.feedback || q.complement || '';
+
+            const borderColor = isReflection
+              ? '#ddd6fe'
+              : isCorrect
+              ? '#bbf7d0'
+              : '#fecaca';
+            const badgeBg = isReflection
+              ? '#f5f3ff'
+              : isCorrect
+              ? '#dcfce7'
+              : '#fee2e2';
+            const badgeColor = isReflection
+              ? '#6d28d9'
+              : isCorrect
+              ? '#166534'
+              : '#991b1b';
+            const badgeLabel = isReflection
+              ? '💬 Reflexão Pessoal'
+              : isCorrect
+              ? '✓ Acertou'
+              : '✕ Errou';
 
             return (
               <div 
@@ -84,40 +109,45 @@ export function ReviewModal({ userAnswers, onClose, playClick, onFilterChange })
                   background: '#f8fafc',
                   padding: '20px',
                   borderRadius: '16px',
-                  border: isCorrect ? '2px solid #bbf7d0' : '2px solid #fecaca'
+                  border: `2px solid ${borderColor}`
                 }}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '10px', marginBottom: '14px' }}>
                   <span className="review-q-header" style={{ fontSize: '1.1rem', fontWeight: 800, color: '#1e2952' }}>
-                    {q.question}
+                    {q.question || `${q.id}. ${q.pergunta}`}
                   </span>
                   <span style={{
                     padding: '6px 14px',
                     borderRadius: '12px',
                     fontSize: '0.85rem',
                     fontWeight: 800,
-                    background: isCorrect ? '#dcfce7' : '#fee2e2',
-                    color: isCorrect ? '#166534' : '#991b1b',
+                    background: badgeBg,
+                    color: badgeColor,
                     whiteSpace: 'nowrap'
                   }}>
-                    {isCorrect ? '✓ Acertou' : '✕ Errou'}
+                    {badgeLabel}
                   </span>
                 </div>
 
-                {/* Question feedback options stack matching reference design */}
+                {/* Question feedback options stack */}
                 <div className="feedback-options-stack">
-                  {q.options.map(opt => {
-                    const isRight = opt.id === q.correctAnswer;
+                  {alternatives.map(opt => {
+                    const isRight = !isReflection && (opt.correta === true || opt.id === q.correctAnswer);
                     const wasChosen = opt.id === chosenId;
+                    const optText = opt.texto || opt.text;
 
                     let stateClass = 'state-neutral';
-                    if (isRight) {
+                    if (isReflection) {
+                      if (wasChosen) stateClass = 'state-correct';
+                    } else if (isRight) {
                       stateClass = 'state-correct';
                     } else if (wasChosen && !isRight) {
                       stateClass = 'state-incorrect';
                     }
 
-                    const hasAttachedComplement = isRight && Boolean(q.complement);
+                    const hasAttachedComplement =
+                      Boolean(feedbackText) &&
+                      (isReflection ? wasChosen : isRight);
 
                     return (
                       <div key={opt.id} className="feedback-option-group">
@@ -126,15 +156,20 @@ export function ReviewModal({ userAnswers, onClose, playClick, onFilterChange })
                             {opt.id}
                           </div>
                           <div className="feedback-option-body">
-                            <span>{opt.text}</span>
-                            {wasChosen && !isRight && (
+                            <span>{optText}</span>
+                            {!isReflection && wasChosen && !isRight && (
                               <span style={{ marginLeft: 'auto', fontWeight: 700, fontSize: '0.85rem', color: '#ff0b0b' }}>
                                 (Sua Escolha)
                               </span>
                             )}
-                            {wasChosen && isRight && (
+                            {!isReflection && wasChosen && isRight && (
                               <span style={{ marginLeft: 'auto', fontWeight: 700, fontSize: '0.85rem', color: '#4ade80' }}>
                                 (Sua Escolha Correta)
+                              </span>
+                            )}
+                            {isReflection && wasChosen && (
+                              <span style={{ marginLeft: 'auto', fontWeight: 700, fontSize: '0.85rem', color: '#a78bfa' }}>
+                                (Sua Reflexão)
                               </span>
                             )}
                           </div>
@@ -145,10 +180,10 @@ export function ReviewModal({ userAnswers, onClose, playClick, onFilterChange })
                           <div className="feedback-complement-card">
                             <div className="feedback-complement-header">
                               <LightbulbRaysIcon size={24} color="#ffffff" />
-                              <span>Complemento:</span>
+                              <span>{isReflection ? 'Reflexão:' : 'Feedback:'}</span>
                             </div>
                             <div className="feedback-complement-body">
-                              {q.complement}
+                              {feedbackText}
                             </div>
                           </div>
                         )}

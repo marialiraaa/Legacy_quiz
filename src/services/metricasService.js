@@ -69,7 +69,8 @@ export function consolidarMetricasQuiz(userAnswers = {}) {
     const chosenOpt = ans?.selectedOption || ans?.selectedOpt;
     if (!ans || !chosenOpt) return;
 
-    const acertou = Boolean(ans.isCorrect);
+    const isReflection = question.tipo === "reflexao" || ans.tipo === "reflexao";
+    const acertou = isReflection ? null : Boolean(ans.isCorrect);
     const tempoMs =
       typeof ans.tempoRespostaMs === "number" && ans.tempoRespostaMs > 0
         ? ans.tempoRespostaMs
@@ -92,8 +93,10 @@ export function consolidarMetricasQuiz(userAnswers = {}) {
     }
 
     totalRespondidas += 1;
-    if (acertou) totalAcertos += 1;
-    else totalErros += 1;
+    if (!isReflection) {
+      if (acertou) totalAcertos += 1;
+      else totalErros += 1;
+    }
     somaTempoQuizMs += tempoMs;
     somaTempoQuizSegundos += timeSpentSeconds;
 
@@ -103,10 +106,12 @@ export function consolidarMetricasQuiz(userAnswers = {}) {
       timeSpentSeconds,
       startedAt,
       answeredAt,
+      tipo: question.tipo || "conhecimento",
       questaoId: question.id,
       categoria: question.category,
+      categoriaNome: question.categoria || question.category,
       alternativaEscolhida: String(chosenOpt),
-      alternativaCorreta: question.correctAnswer,
+      alternativaCorreta: isReflection ? null : question.correctAnswer,
       acertou,
       tempoRespostaMs: tempoMs,
       respondidaEm: answeredAt
@@ -115,20 +120,30 @@ export function consolidarMetricasQuiz(userAnswers = {}) {
     const catStats = porCategoria[question.category];
     if (catStats) {
       catStats.respondidas += 1;
-      if (acertou) catStats.acertos += 1;
-      else catStats.erros += 1;
+      if (!isReflection) {
+        if (acertou) catStats.acertos += 1;
+        else catStats.erros += 1;
+      }
       catStats.tempoTotalMs += tempoMs;
     }
   });
 
   Object.values(porCategoria).forEach((catStats) => {
     if (catStats.respondidas > 0) {
-      catStats.percentualAcerto = Math.round((catStats.acertos / catStats.respondidas) * 100);
+      const totalPontuaveisCat = catStats.acertos + catStats.erros;
+      catStats.percentualAcerto =
+        totalPontuaveisCat > 0
+          ? Math.round((catStats.acertos / totalPontuaveisCat) * 100)
+          : 100;
       catStats.tempoMedioMs = Math.round(catStats.tempoTotalMs / catStats.respondidas);
     }
   });
 
-  const totalQuestoes = QUIZ_QUESTIONS.length;
+  const totalQuestoesConhecimento = QUIZ_QUESTIONS.filter(
+    (q) => q.tipo !== "reflexao"
+  ).length;
+  const totalQuestoes =
+    totalQuestoesConhecimento > 0 ? totalQuestoesConhecimento : QUIZ_QUESTIONS.length;
   const percentualAcerto =
     totalQuestoes > 0 ? Math.round((totalAcertos / totalQuestoes) * 100) : 0;
   const tempoMedioPorQuestaoMs =
@@ -167,11 +182,13 @@ export function consolidarMetricasQuiz(userAnswers = {}) {
  * @param {Object} bonusAnswers - Mapa { [bonusId]: { selectedOpt, timeSpentSeconds, startedAt, answeredAt, tempoRespostaMs, respondidaEm } | string }
  * @returns {Object}
  */
-export function consolidarRespostasBonus(bonusAnswers = {}) {
+export function consolidarRespostasBonus(bonusAnswers = {}, userAnswers = {}) {
   const resultado = {};
 
   BONUS_QUESTIONS.forEach((bonus) => {
-    const raw = bonusAnswers[bonus.id];
+    const raw =
+      bonusAnswers[bonus.id] ||
+      (bonus.questionIdNumeric ? userAnswers[bonus.questionIdNumeric] : null);
     if (!raw) return;
 
     if (typeof raw === "string") {
@@ -249,7 +266,7 @@ export function construirPayloadSessao({
   );
 
   const { respostasQuiz, desempenho, temposQuiz } = consolidarMetricasQuiz(userAnswers);
-  const respostasBonus = consolidarRespostasBonus(bonusAnswers);
+  const respostasBonus = consolidarRespostasBonus(bonusAnswers, userAnswers);
 
   const resolvedQuizDurationSeconds =
     typeof totalQuizDurationSeconds === "number" && totalQuizDurationSeconds > 0
@@ -538,9 +555,11 @@ export function calcularAnaliticoCompleto(sessoes = [], filtroCategoria = "ALL")
   );
   const mediaPontuacao =
     concluidas.length > 0 ? Number((somaAcertosConcluidas / concluidas.length).toFixed(1)) : 0;
+  const totalQuestoesConhecimento =
+    QUIZ_QUESTIONS.filter((q) => q.tipo !== "reflexao").length || QUIZ_QUESTIONS.length;
   const percentualMedioAcerto =
     concluidas.length > 0
-      ? Math.round((mediaPontuacao / QUIZ_QUESTIONS.length) * 100)
+      ? Math.round((mediaPontuacao / totalQuestoesConhecimento) * 100)
       : 0;
 
   const somaDuracaoConcluidas = concluidas.reduce(
@@ -655,13 +674,16 @@ export function calcularAnaliticoCompleto(sessoes = [], filtroCategoria = "ALL")
     let somaTempoMs = 0;
     const contagemOpcoes = { A: 0, B: 0, C: 0 };
 
+    const isReflection = q.tipo === "reflexao";
     sessoes.forEach((s) => {
       const resp = s.respostasQuiz?.[String(q.id)];
       if (!resp || !resp.alternativaEscolhida) return;
 
       respondidas += 1;
-      if (resp.acertou) acertos += 1;
-      else erros += 1;
+      if (!isReflection) {
+        if (resp.acertou) acertos += 1;
+        else erros += 1;
+      }
       somaTempoMs += Number(resp.tempoRespostaMs) || 0;
 
       const opt = String(resp.alternativaEscolhida).toUpperCase();
@@ -670,7 +692,11 @@ export function calcularAnaliticoCompleto(sessoes = [], filtroCategoria = "ALL")
       }
     });
 
-    const taxaAcerto = respondidas > 0 ? Math.round((acertos / respondidas) * 100) : 0;
+    const taxaAcerto = isReflection
+      ? 100
+      : respondidas > 0
+      ? Math.round((acertos / respondidas) * 100)
+      : 0;
     const tempoMedioMs = respondidas > 0 ? Math.round(somaTempoMs / respondidas) : 0;
 
     return {
@@ -703,7 +729,9 @@ export function calcularAnaliticoCompleto(sessoes = [], filtroCategoria = "ALL")
     const contagemOpcoes = { A: 0, B: 0, C: 0 };
 
     sessoes.forEach((s) => {
-      const bResp = s.respostasBonus?.[bonus.id];
+      const bResp =
+        s.respostasBonus?.[bonus.id] ||
+        (bonus.questionIdNumeric ? s.respostasQuiz?.[String(bonus.questionIdNumeric)] : null);
       if (!bResp || !bResp.alternativaEscolhida) return;
       totalRespostas += 1;
       somaTempoMs += Number(bResp.tempoRespostaMs) || 0;

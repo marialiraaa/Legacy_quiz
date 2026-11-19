@@ -1,390 +1,259 @@
 export const CATEGORIES = {
-  BASIC_CONCEPTS: {
-    id: "basic_concepts",
-    name: "Conceitos Básicos de Mundo Digital",
-    badge: "Mundo Digital",
+  BLOCO_A: {
+    id: "bloco_a",
+    name: "Bloco A: Conceito e Importância",
+    badge: "Bloco A • Conceito",
     icon: "🌐",
     color: "#3b82f6"
   },
-  IMPORTANCE: {
-    id: "importance",
-    name: "Legado Digital: Importância",
-    badge: "Importância",
-    icon: "⭐",
-    color: "#8b5cf6"
-  },
-  DIGITAL_DATA: {
-    id: "digital_data",
-    name: "Dados Digitais",
-    badge: "Dados & Memória",
-    icon: "💾",
-    color: "#06b6d4"
-  },
-  MANAGEMENT: {
-    id: "management",
-    name: "Gerenciamento de Legado Digital",
-    badge: "Gerenciamento",
+  BLOCO_B: {
+    id: "bloco_b",
+    name: "Bloco B: Privacidade e Memória",
+    badge: "Bloco B • Privacidade",
     icon: "🔐",
     color: "#10b981"
   },
-  DIGITAL_ACCOUNTS: {
-    id: "digital_accounts",
-    name: "Contas Digitais",
-    badge: "Contas & Redes",
-    icon: "👤",
+  BLOCO_C: {
+    id: "bloco_c",
+    name: "Bloco C: Plataformas na Prática",
+    badge: "Bloco C • Plataformas",
+    icon: "📱",
     color: "#f59e0b"
   },
-  ASSET_DESTINATION: {
-    id: "asset_destination",
-    name: "Destinação de Bens",
-    badge: "Destinação",
-    icon: "📜",
-    color: "#ec4899"
+  BLOCO_D: {
+    id: "bloco_d",
+    name: "Bloco D: Sua Reflexão",
+    badge: "Bloco D • Reflexão",
+    icon: "✨",
+    color: "#8b5cf6"
   }
 };
 
-export const QUIZ_QUESTIONS = [
+const CATEGORY_NAME_TO_KEY = {
+  "Bloco A: Conceito e Importância": "BLOCO_A",
+  "Bloco B: Privacidade e Memória": "BLOCO_B",
+  "Bloco C: Plataformas na Prática": "BLOCO_C",
+  "Bloco D: Sua Reflexão": "BLOCO_D"
+};
+
+export function getCategoryInfo(categoriaOrKey) {
+  if (!categoriaOrKey) return CATEGORIES.BLOCO_A;
+  if (CATEGORIES[categoriaOrKey]) return CATEGORIES[categoriaOrKey];
+  const mappedKey = CATEGORY_NAME_TO_KEY[categoriaOrKey];
+  if (mappedKey && CATEGORIES[mappedKey]) return CATEGORIES[mappedKey];
+  return {
+    id: String(categoriaOrKey).toLowerCase().replace(/\s+/g, "_"),
+    name: String(categoriaOrKey),
+    badge: String(categoriaOrKey),
+    icon: "✨",
+    color: "#3b82f6"
+  };
+}
+
+export const quizQuestions = [
+  // BLOCO A: CONCEITO E IMPORTÂNCIA
   {
     id: 1,
-    category: "BASIC_CONCEPTS",
-    question: "1. O que é uma conta online?",
-    image: "assets/illustration-q1.png",
-    options: [
-      { id: "A", text: "Um perfil criado para acessar e utilizar serviços digitais, como e-mail, aplicativos ou redes sociais." },
-      { id: "B", text: "Um dispositivo utilizado para acessar a internet." },
-      { id: "C", text: "Um tipo de conexão de internet." }
+    tipo: "conhecimento",
+    categoria: "Bloco A: Conceito e Importância",
+    pergunta: "O que compõe a identidade digital de uma pessoa?",
+    alternativas: [
+      { id: "A", texto: "Os dados oficiais cadastrados exclusivamente em sites governamentais.", correta: false },
+      { id: "B", texto: "As informações, publicações, curtidas e interações registradas online.", correta: true },
+      { id: "C", texto: "O histórico de compras e transações bancárias feitas pela internet.", correta: false }
     ],
-    correctAnswer: "A",
-    complement: "As contas digitais permitem acessar diferentes serviços online e costumam reunir informações pessoais, mensagens, fotos e outros dados importantes, que podem fazer parte do legado digital de uma pessoa."
+    feedback: "Sua identidade digital vai além de cadastros formais: ela é construída diariamente por tudo o que você posta, comenta, compartilha e salva na rede."
   },
   {
     id: 2,
-    category: "BASIC_CONCEPTS",
-    question: "2. Qual destes exemplos é um conteúdo digital?",
-    image: "img/pergunta2.png",
-    options: [
-      { id: "A", text: "Um celular." },
-      { id: "B", text: "Uma conta de e-mail." },
-      { id: "C", text: "Um computador." }
+    tipo: "conhecimento",
+    categoria: "Bloco A: Conceito e Importância",
+    pergunta: "O que forma o legado digital de alguém?",
+    alternativas: [
+      { id: "A", texto: "O conjunto de fotos, vídeos, mensagens, contas e arquivos acumulados online ao longo da vida.", correta: true },
+      { id: "B", texto: "Os aparelhos eletrônicos físicos, como celulares e notebooks, deixados pela pessoa.", correta: false },
+      { id: "C", texto: "Os bens que possuem valor financeiro direto, como saldos digitais e criptomoedas.", correta: false }
     ],
-    correctAnswer: "B",
-    complement: "Enquanto celulares e computadores são aparelhos físicos de acesso (hardware), contas de e-mail, fotos, documentos e mensagens representam o conteúdo e os dados que existem e circulam no ambiente digital."
+    feedback: "O legado digital engloba tanto bens com valor econômico quanto registros afetivos e sociais (fotos, chats, perfis e documentos na nuvem) que permanecem após a morte."
   },
   {
     id: 3,
-    category: "BASIC_CONCEPTS",
-    question: "3. Qual destes exemplos pode fazer parte de uma identidade digital?",
-    image: "img/pergunta3.png",
-    options: [
-      { id: "A", text: "As informações, publicações e interações realizadas em ambientes online." },
-      { id: "B", text: "Apenas os dados cadastrados em redes sociais." },
-      { id: "C", text: "Apenas os conteúdos compartilhados publicamente." }
+    tipo: "conhecimento",
+    categoria: "Bloco A: Conceito e Importância",
+    pergunta: "Quem deve se preocupar com o próprio legado digital?",
+    alternativas: [
+      { id: "A", texto: "Criadores de conteúdo e influenciadores com grande alcance nas redes.", correta: false },
+      { id: "B", texto: "Profissionais que guardam contratos e documentos financeiros na nuvem.", correta: false },
+      { id: "C", texto: "Qualquer pessoa que utilize contas, aplicativos ou serviços digitais.", correta: true }
     ],
-    correctAnswer: "A",
-    complement: "A identidade digital é composta pelo conjunto integrado de dados, postagens, históricos e interações que constroem a representação de uma pessoa no ambiente virtual."
+    feedback: "Mesmo quem tem poucos seguidores acumula anos de fotos, e-mails e contas vinculadas. Por isso, o planejamento digital diz respeito a todo usuário conectado."
   },
   {
     id: 4,
-    category: "BASIC_CONCEPTS",
-    question: "4. Uma prática que ajuda a proteger a privacidade digital é:",
-    image: "img/pergunta4.png",
-    options: [
-      { id: "A", text: "Confiar que as plataformas digitais protegerão automaticamente todos os seus dados." },
-      { id: "B", text: "Utilizar as mesmas informações de acesso em diferentes plataformas." },
-      { id: "C", text: "Revisar as configurações de privacidade e controlar o compartilhamento de dados." }
+    tipo: "conhecimento",
+    categoria: "Bloco A: Conceito e Importância",
+    pergunta: "Por que é importante pensar no legado digital ainda em vida?",
+    alternativas: [
+      { id: "A", texto: "Para garantir que todas as redes sociais continuem publicando conteúdos automaticamente.", correta: false },
+      { id: "B", texto: "Para decidir como contas, memórias e dados serão gerenciados ou encerrados no futuro.", correta: true },
+      { id: "C", texto: "Para impedir que empresas de tecnologia façam atualizações nos aplicativos usados.", correta: false }
     ],
-    correctAnswer: "C",
-    complement: "Revisar periodicamente quem pode visualizar seus dados, controlar permissões de aplicativos e habilitar recursos de segurança como autenticação em dois fatores são fundamentais para proteger sua privacidade."
+    feedback: "Planejar evita que memórias importantes se percam para sempre ou que dados privados fiquem expostos sem que ninguém saiba o que você gostaria que fosse feito."
   },
+
+  // BLOCO B: PRIVACIDADE E MEMÓRIA
   {
     id: 5,
-    category: "IMPORTANCE",
-    question: "5. O que é formado pelo legado digital?",
-    image: "img/pergunta5.png",
-    options: [
-      { id: "A", text: "Apenas arquivos armazenados em serviços de nuvem." },
-      { id: "B", text: "Tudo que é acumulado e armazenado digitalmente por uma pessoa ao longo da vida." },
-      { id: "C", text: "Apenas mensagens de texto." }
+    tipo: "conhecimento",
+    categoria: "Bloco B: Privacidade e Memória",
+    pergunta: "Qual é uma consequência de compartilhar mensagens e mídias em ambientes digitais?",
+    alternativas: [
+      { id: "A", texto: "Esses registros podem permanecer acessíveis e influenciar como você será lembrado.", correta: true },
+      { id: "B", texto: "Todas as conversas privadas são apagadas automaticamente quando a conta fica inativa.", correta: false },
+      { id: "C", texto: "Os arquivos enviados deixam de existir assim que o aplicativo é desinstalado do celular.", correta: false }
     ],
-    correctAnswer: "B",
-    complement: "O legado digital reúne o patrimônio existencial, documental e afetivo deixado nos ambientes digitais: fotos, vídeos, mensagens, contas bancárias online, perfis sociais e registros afetivos acumulados ao longo dos anos."
+    feedback: "Diferente de uma conversa presencial, o que vai para a nuvem ou para o chat de outras pessoas pode durar anos — moldando sua memória digital e exigindo cuidado com a privacidade."
   },
   {
     id: 6,
-    category: "IMPORTANCE",
-    question: "6. Qual dos exemplos abaixo pode fazer parte do legado digital de uma pessoa?",
-    image: "img/pergunta6.png",
-    options: [
-      { id: "A", text: "Fotos, vídeos, mensagens, contas online e outros dados acumulados por uma pessoa." },
-      { id: "B", text: "Somente publicações feitas em redes sociais." },
-      { id: "C", text: "Apenas criptomoedas." }
+    tipo: "conhecimento",
+    categoria: "Bloco B: Privacidade e Memória",
+    pergunta: "O que acontece com fotos salvas na nuvem após a morte do titular da conta?",
+    alternativas: [
+      { id: "A", texto: "São excluídas imediatamente assim que o celular fica sem conexão com a internet.", correta: false },
+      { id: "B", texto: "Tornam-se públicas automaticamente para que amigos possam baixar.", correta: false },
+      { id: "C", texto: "Elas permanecem armazenadas ou são encerradas conforme as configurações prévias e regras do serviço.", correta: true }
     ],
-    correctAnswer: "A",
-    complement: "O legado digital é multifacetado: engloba tanto elementos de grande valor emocional e afetivo (fotos de família, conversas) quanto bens com valor econômico, patrimonial e documental."
+    feedback: "Cada plataforma tem uma política própria. Sem uma configuração prévia, a família pode ter muita dificuldade — ou até precisar de autorização judicial — para recuperar fotos de família."
   },
   {
     id: 7,
-    category: "IMPORTANCE",
-    question: "7. Quem deve se preocupar com o legado digital?",
-    image: "img/pergunta7.png",
-    options: [
-      { id: "A", text: "Somente pessoas que possuem muitos seguidores na internet." },
-      { id: "B", text: "Apenas usuários que armazenam documentos importantes." },
-      { id: "C", text: "Qualquer pessoa que utilize serviços, contas ou plataformas digitais." }
+    tipo: "conhecimento",
+    categoria: "Bloco B: Privacidade e Memória",
+    pergunta: "Qual atitude ajuda a garantir que suas vontades digitais sejam respeitadas no futuro?",
+    alternativas: [
+      { id: "A", texto: "Deixar todas as redes sociais abertas sem senha no aparelho principal.", correta: false },
+      { id: "B", texto: "Configurar ferramentas de legado nas plataformas e deixar orientações claras a alguém de confiança.", correta: true },
+      { id: "C", texto: "Confiar que os provedores de e-mail entrarão em contato com seus familiares.", correta: false }
     ],
-    correctAnswer: "C",
-    complement: "Não é necessário ser figura pública. Qualquer usuário com smartphone ou contas ativas deixa rastros e bens que podem necessitar de gestão e gerar impacto emocional e prático para seus entes queridos."
+    feedback: "As plataformas não sabem o que aconteceu com o usuário a menos que sejam avisadas ou que você já tenha configurado um contato de confiança previamente."
   },
   {
     id: 8,
-    category: "IMPORTANCE",
-    question: "8. Por que é importante pensar no legado digital?",
-    image: "img/pergunta8.png",
-    options: [
-      { id: "A", text: "Para definir como informações, contas e conteúdos digitais poderão ser gerenciados no futuro." },
-      { id: "B", text: "Para evitar que empresas utilizem qualquer dado pessoal após a morte." },
-      { id: "C", text: "Para impedir que registros digitais sejam modificados ao longo do tempo." }
+    tipo: "conhecimento",
+    categoria: "Bloco B: Privacidade e Memória",
+    pergunta: "Qual é a finalidade de uma mensagem póstuma digital?",
+    alternativas: [
+      { id: "A", texto: "Transferir automaticamente a titularidade bancária para outra pessoa.", correta: false },
+      { id: "B", texto: "Manter o perfil ativo respondendo mensagens como se o usuário estivesse online.", correta: false },
+      { id: "C", texto: "Entregar, no futuro, uma despedida, lembrança ou orientação preparada previamente.", correta: true }
     ],
-    correctAnswer: "A",
-    complement: "Pensar no legado digital confere autonomia e tranquilidade: garante que suas vontades sejam respeitadas sobre o que deve ser preservado ou excluído, poupando familiares de desgastes e incertezas."
+    feedback: "Alguns serviços digitais permitem agendar mensagens ou liberar arquivos específicos para entes queridos após um período de inatividade comprovada."
   },
+
+  // BLOCO C: PLATAFORMAS NA PRÁTICA
   {
     id: 9,
-    category: "DIGITAL_DATA",
-    question: "9. Por que uma conta de e-mail pode ser considerada parte do legado digital de uma pessoa?",
-    image: "img/pergunta9.png",
-    options: [
-      { id: "A", text: "Porque serve apenas para receber propagandas." },
-      { id: "B", text: "Porque pode reunir registros de atividades, mensagens e informações importantes ao longo da vida." },
-      { id: "C", text: "Porque possuem informações de contato." }
+    tipo: "conhecimento",
+    categoria: "Bloco C: Plataformas na Prática",
+    pergunta: "O que acontece com um perfil no Facebook ou Instagram após o falecimento do usuário?",
+    alternativas: [
+      { id: "A", texto: "Pode ser transformado em memorial (com a tag 'Em memória') ou excluído mediante solicitação.", correta: true },
+      { id: "B", texto: "Continua aparecendo normalmente nas sugestões de amizade e lembretes de aniversário.", correta: false },
+      { id: "C", texto: "É bloqueado permanentemente sem possibilidade de exclusão pela família.", correta: false }
     ],
-    correctAnswer: "B",
-    complement: "O e-mail frequentemente atua como a chave mestra de toda a existência digital: nele convergem contratos, notas fiscais, comunicações confidenciais e links para recuperação de senhas de outros serviços."
+    feedback: "A Meta permite transformar contas em memoriais (congelando o perfil para homenagens) ou removê-las permanentemente quando familiares enviam a documentação necessária."
   },
   {
     id: 10,
-    category: "DIGITAL_DATA",
-    question: "10. Qual é uma possível consequência de compartilhar mensagens em ambientes digitais?",
-    image: "img/pergunta10.png",
-    options: [
-      { id: "A", text: "Essas mensagens podem permanecer registradas e influenciar a forma como a pessoa é lembrada." },
-      { id: "B", text: "Elas desaparecem automaticamente após sua morte." },
-      { id: "C", text: "As mensagens deixam de existir quando o usuário encerra a conta." }
+    tipo: "conhecimento",
+    categoria: "Bloco C: Plataformas na Prática",
+    pergunta: "O que permite a ferramenta 'Gerenciador de Contas Inativas' do Google?",
+    alternativas: [
+      { id: "A", texto: "Aumentar gratuitamente o espaço de armazenamento do Google Drive e do Gmail.", correta: false },
+      { id: "B", texto: "Escolher quem receberá acesso a dados (como Fotos e Drive) ou mandar apagar tudo após um tempo sem uso.", correta: true },
+      { id: "C", texto: "Compartilhar sua senha em tempo real com até dez contatos de emergência.", correta: false }
     ],
-    correctAnswer: "A",
-    complement: "A comunicação digital tem alta persistência no tempo. O conteúdo que compartilhamos constrói nossa memória póstuma e influencia como amigos e familiares se recordarão de nossas conversas."
+    feedback: "Pouca gente conhece, mas o Google tem essa função nativa! Você define um prazo (ex: 3 meses sem login) e decide se quer avisar contatos de confiança ou excluir a conta."
   },
   {
     id: 11,
-    category: "DIGITAL_DATA",
-    question: "11. Por que fotos e vídeos digitais podem ter valor para familiares e amigos no futuro?",
-    image: "img/pergunta11.png",
-    options: [
-      { id: "A", text: "Porque podem preservar memórias, experiências e aspectos da história de uma pessoa." },
-      { id: "B", text: "Porque ficam armazenados no celular." },
-      { id: "C", text: "Porque nunca podem ser apagados." }
+    tipo: "conhecimento",
+    categoria: "Bloco C: Plataformas na Prática",
+    pergunta: "Qual é o principal risco de não planejar o acesso às contas digitais?",
+    alternativas: [
+      { id: "A", texto: "As senhas serem divulgadas automaticamente para os contatos da agenda.", correta: false },
+      { id: "B", texto: "Os aplicativos cobrarem multas mensais por falta de movimentação.", correta: false },
+      { id: "C", texto: "Arquivos afetivos, documentos e contas importantes ficarem inacessíveis para a família.", correta: true }
     ],
-    correctAnswer: "A",
-    complement: "Imagens e registros audiovisuais têm imenso valor afetivo: são testemunhos visuais de momentos partilhados, essenciais para a elaboração do luto e para a transmissão da memória entre gerações."
+    feedback: "Por questões de privacidade e termos de uso, as empresas não entregam senhas a familiares sem autorização prévia, o que pode trancar lembranças e registros importantes."
   },
   {
     id: 12,
-    category: "DIGITAL_DATA",
-    question: "12. O que pode ocorrer com fotos armazenadas em serviços de nuvem após a morte do proprietário da conta?",
-    image: "img/pergunta12.png",
-    options: [
-      { id: "A", text: "Elas podem continuar disponíveis ou ser acessadas conforme as configurações da conta e as políticas do serviço." },
-      { id: "B", text: "Elas são obrigatoriamente excluídas imediatamente." },
-      { id: "C", text: "Tornam-se públicas para todos." }
+    tipo: "conhecimento",
+    categoria: "Bloco C: Plataformas na Prática",
+    pergunta: "O que pode ocorrer com os bens digitais de uma pessoa após sua morte?",
+    alternativas: [
+      { id: "A", texto: "Podem exigir decisões de familiares ou herdeiros sobre preservação, acesso ou exclusão.", correta: true },
+      { id: "B", texto: "São transferidos de forma automática e imediata para o nome dos parentes próximos.", correta: false },
+      { id: "C", texto: "Passam a pertencer ao domínio público e podem ser baixados por qualquer usuário.", correta: false }
     ],
-    correctAnswer: "A",
-    complement: "Cada provedor de nuvem (Google Fotos, iCloud, OneDrive) possui termos de serviço próprios. Sem planejamento prévio, fotos podem continuar em servidores ou ser excluídas por inatividade prolongada."
+    feedback: "A legislação e os contratos das plataformas ainda geram muitos debates. Por isso, deixar suas preferências registradas evita conflitos e dúvidas para quem fica."
   },
+
+  // BLOCO D: SUA REFLEXÃO (SEM CERTO OU ERRADO)
   {
     id: 13,
-    category: "MANAGEMENT",
-    question: "13. Qual é a forma de cuidar do seu legado digital?",
-    image: "img/pergunta13.png",
-    options: [
-      { id: "A", text: "Apenas guarde senhas em um local seguro." },
-      { id: "B", text: "Definir o que acontecerá com contas, arquivos e conteúdos digitais no futuro." },
-      { id: "C", text: "Ignorar o assunto, pois ninguém terá acesso aos seus conteúdos no futuro." }
+    tipo: "reflexao",
+    categoria: "Bloco D: Sua Reflexão",
+    pergunta: "Se alguém conhecesse você apenas pelo que está salvo nas suas contas hoje, o que descobriria?",
+    alternativas: [
+      { id: "A", texto: "Apenas um recorte superficial, pois guardo o mais importante fora da internet.", correta: null },
+      { id: "B", texto: "Boa parte da minha história, gostos, fotos e momentos marcantes.", correta: null },
+      { id: "C", texto: "Uma mistura de coisas úteis com arquivos e conversas que eu preferiria apagar.", correta: null }
     ],
-    correctAnswer: "B",
-    complement: "Cuidar do legado envolve inventariar contas, escolher guardiões de confiança e deixar instruções claras sobre quais dados devem ser guardados, entregues a pessoas queridas ou excluídos."
+    feedback: "Reflexão registrada! Essa pergunta mostra como nossos rastros digitais contam uma história sobre nós — e por que vale a pena fazer uma 'faxina' ou curadoria digital de tempos em tempos."
   },
   {
     id: 14,
-    category: "MANAGEMENT",
-    question: "14. Qual ação pode ajudar a preservar suas vontades sobre seus conteúdos digitais?",
-    image: "img/pergunta14.png",
-    options: [
-      { id: "A", text: "Não fazer nada e deixar que a família resolva tudo." },
-      { id: "B", text: "Registrar orientações sobre o destino de contas e informações digitais." },
-      { id: "C", text: "Apagar todas as contas antes de falecer." }
+    tipo: "reflexao",
+    categoria: "Bloco D: Sua Reflexão",
+    pergunta: "Se você não pudesse acessar suas contas amanhã, o que gostaria que fosse feito com seus dados?",
+    alternativas: [
+      { id: "A", texto: "Preferiria que todas as minhas contas e conversas fossem excluídas permanentemente.", correta: null },
+      { id: "B", texto: "Nunca tinha parado para pensar nisso, mas agora vejo que preciso me organizar.", correta: null },
+      { id: "C", texto: "Gostaria que fotos e lembranças fossem entregues a alguém de confiança, e o resto apagado.", correta: null }
     ],
-    correctAnswer: "B",
-    complement: "Registrar orientações (em um testamento, diretiva digital ou ferramenta de legado da própria plataforma) fornece um mapa claro de conduta para os familiares, evitando conflitos e dúvidas."
-  },
-  {
-    id: 15,
-    category: "MANAGEMENT",
-    question: "15. Por que alguém pode optar por deixar mensagens digitais para serem acessadas no futuro?",
-    image: "img/pergunta15.png",
-    options: [
-      { id: "A", text: "Para transmitir lembranças, orientações ou mensagens significativas a outras pessoas." },
-      { id: "B", text: "Para aumentar o espaço de armazenamento." },
-      { id: "C", text: "Para criar novas contas automaticamente." }
-    ],
-    correctAnswer: "A",
-    complement: "Mensagens programadas para marcos futuros ou bilhetes póstumos funcionam como atos de amor e carinho, acolhendo aqueles que continuam em sua jornada com palavras de afeto e lembrança."
-  },
-  {
-    id: 16,
-    category: "MANAGEMENT",
-    question: "16. Qual é a possível finalidade de uma mensagem póstuma digital?",
-    image: "img/pergunta16.png",
-    options: [
-      { id: "A", text: "Compartilhar, após a morte, uma mensagem que havia sido previamente preparada." },
-      { id: "B", text: "Transferir automaticamente contas para outras pessoas." },
-      { id: "C", text: "Impedir o acesso a qualquer informação digital após a morte." }
-    ],
-    correctAnswer: "A",
-    complement: "Mensagens póstumas podem transmitir palavras de conforto, confissões, ensinamentos de vida ou instruções práticas importantes para que os entes queridos encontrem amparo."
-  },
-  {
-    id: 17,
-    category: "DIGITAL_ACCOUNTS",
-    question: "17. O que acontece com um perfil no Facebook após a morte do usuário?",
-    image: "img/pergunta17.png",
-    options: [
-      { id: "A", text: "Ele deve permanecer público permanentemente." },
-      { id: "B", text: "O perfil pode ser transformado em memorial ou excluído." },
-      { id: "C", text: "Não existe esse recurso." }
-    ],
-    correctAnswer: "B",
-    complement: "O Facebook possui o recurso de perfil memorializado ('Em memória de'), onde homenagens podem ser prestadas e um contato herdeiro pré-definido pode fixar um tributo ou gerenciar solicitações."
-  },
-  {
-    id: 18,
-    category: "DIGITAL_ACCOUNTS",
-    question: "18. Por que algumas plataformas permitem indicar uma pessoa de confiança para gerenciar uma conta após a morte?",
-    image: "img/pergunta18.png",
-    options: [
-      { id: "A", text: "Para garantir que conteúdos e informações digitais possam ser administrados conforme a vontade do usuário." },
-      { id: "B", text: "Para aumentar o número de acessos à conta." },
-      { id: "C", text: "Para manter a conta ativa indefinidamente." }
-    ],
-    correctAnswer: "A",
-    complement: "Plataformas como Google (Gerenciador de Contas Inativas) e Apple (Contato de Legado) criaram esses recursos para que a privacidade seja mantida, delegando acesso apenas a quem o titular autorizou formalmente."
-  },
-  {
-    id: 19,
-    category: "DIGITAL_ACCOUNTS",
-    question: "19. Qual pode ser uma consequência de não planejar o acesso às contas digitais?",
-    image: "img/pergunta19.png",
-    options: [
-      { id: "A", text: "Arquivos, mensagens e informações importantes podem se tornar inacessíveis para familiares ou pessoas autorizadas." },
-      { id: "B", text: "Todas as contas serão automaticamente transferidas para os parentes mais próximos." },
-      { id: "C", text: "Os serviços digitais compartilharão as senhas com a família." }
-    ],
-    correctAnswer: "A",
-    complement: "Em virtude da criptografia e das políticas de termos de serviço, as empresas não compartilham senhas com parentes. Sem planejamento, fotos e documentos podem ser perdidos para sempre."
-  },
-  {
-    id: 20,
-    category: "DIGITAL_ACCOUNTS",
-    question: "20. O que acontece com as contas online após o falecimento?",
-    image: "img/pergunta20.png",
-    options: [
-      { id: "A", text: "São excluídas automaticamente em 30 dias." },
-      { id: "B", text: "Permanecem ativas indefinidamente em todos os casos." },
-      { id: "C", text: "Dependendo do serviço, podem ser gerenciadas por uma pessoa previamente designada." }
-    ],
-    correctAnswer: "C",
-    complement: "Cada serviço adota regras próprias: alguns permitem indicar um herdeiro digital ou contato de legado, enquanto outros excluem a conta por inatividade ou exigem ordem judicial."
-  },
-  {
-    id: 21,
-    category: "DIGITAL_ACCOUNTS",
-    question: "21. O que pode acontecer se ninguém souber como acessar as contas digitais de uma pessoa falecida?",
-    image: "img/pergunta21.png",
-    options: [
-      { id: "A", text: "Informações importantes podem ficar inacessíveis." },
-      { id: "B", text: "Todas as contas são transferidas automaticamente para a família." },
-      { id: "C", text: "Nada acontece." }
-    ],
-    correctAnswer: "A",
-    complement: "Sem orientações prévias ou contatos de legado configurados, familiares frequentemente não conseguem acessar fotos, contas financeiras e documentos relevantes guardados na nuvem."
-  },
-  {
-    id: 22,
-    category: "DIGITAL_ACCOUNTS",
-    question: "22. Por que é importante considerar quem poderá acessar seus arquivos e contas digitais no futuro?",
-    image: "img/pergunta22.png",
-    options: [
-      { id: "A", text: "Porque informações com valor afetivo, financeiro ou documental podem precisar ser recuperadas por pessoas autorizadas." },
-      { id: "B", text: "Porque todas as plataformas exigem essa definição ao criar uma conta." },
-      { id: "C", text: "Porque as contas digitais deixam de existir automaticamente após um período de inatividade." }
-    ],
-    correctAnswer: "A",
-    complement: "Definir com antecedência quem pode acessar o patrimônio digital previne a perda irremediável de memórias afetivas valiosas e evita complicações burocráticas ou disputas judiciais."
-  },
-  {
-    id: 23,
-    category: "ASSET_DESTINATION",
-    question: "23. Quem pode enfrentar dificuldades quando não há planejamento sobre o legado digital de uma pessoa?",
-    image: "img/pergunta23.png",
-    options: [
-      { id: "A", text: "Apenas empresas responsáveis pelas plataformas digitais." },
-      { id: "B", text: "Familiares, amigos ou pessoas responsáveis por administrar os bens digitais." },
-      { id: "C", text: "Somente pessoas que possuíam acesso às senhas das contas." }
-    ],
-    correctAnswer: "B",
-    complement: "Familiares e inventariantes costumam enfrentar processos judiciais desgastantes, pedidos negados por big techs e insegurança jurídica na tentativa de preservar a memória do falecido."
-  },
-  {
-    id: 24,
-    category: "ASSET_DESTINATION",
-    question: "24. O que pode acontecer com os bens digitais de uma pessoa após seu falecimento?",
-    image: "img/pergunta24.png",
-    options: [
-      { id: "A", text: "Todos os conteúdos digitais são automaticamente transferidos para os herdeiros." },
-      { id: "B", text: "Eles podem exigir decisões de familiares ou representantes sobre sua preservação, acesso ou exclusão." },
-      { id: "C", text: "Todas as contas e arquivos digitais são excluídos imediatamente após a confirmação do falecimento." }
-    ],
-    correctAnswer: "B",
-    complement: "O destino dos bens digitais varia amplamente entre serviços. Decisões deliberadas tomadas em vida trazem clareza para que familiares saibam exatamente o que preservar e o que encerrar."
+    feedback: "Não existe escolha certa aqui — o importante é que a decisão seja sua! Na próxima tela, você verá dicas rápidas de como configurar isso hoje mesmo no Google e nas redes sociais."
   }
 ];
 
-export const BONUS_QUESTIONS = [
-  {
-    id: "bonus_1",
-    tipo: "reflexao",
-    title: "Pergunta Bônus 1 (Pergunta 25)",
-    question: "Se as pessoas conhecessem você apenas pelos conteúdos que deixou na internet, o que elas provavelmente aprenderiam sobre sua vida?",
-    image: "img/pergunta25.png",
-    options: [
-      { id: "A", text: "Aspectos importantes da minha história, valores e experiências." },
-      { id: "B", text: "Apenas parte de quem eu sou, pois muitas coisas importantes não estão registradas digitalmente." },
-      { id: "C", text: "Não sei dizer, nunca parei para refletir sobre isso." }
-    ],
-    reflection: "Esta reflexão destaca como a nossa pegada digital muitas vezes é apenas um recorte da nossa complexidade humana. O que escolhemos registrar ou omitir molda como as futuras gerações compreenderão a nossa história.",
-    feedback: "Esta reflexão destaca como a nossa pegada digital muitas vezes é apenas um recorte da nossa complexidade humana. O que escolhemos registrar ou omitir molda como as futuras gerações compreenderão a nossa história."
-  },
-  {
-    id: "bonus_2",
-    tipo: "reflexao",
-    title: "Pergunta Bônus 2 (Pergunta 26)",
-    question: "Se você não pudesse mais acessar suas contas digitais amanhã, suas pessoas de confiança saberiam como encontrar ou administrar os conteúdos que considera importantes?",
-    image: "img/pergunta25.png",
-    options: [
-      { id: "A", text: "Sim, já deixei orientações ou formas de acesso." },
-      { id: "B", text: "Talvez encontrassem algumas informações, mas não tudo." },
-      { id: "C", text: "Não, nunca pensei sobre o que aconteceria com meus conteúdos digitais." }
-    ],
-    reflection: "A vulnerabilidade digital é real: conversar abertamente com pessoas queridas sobre senhas mestras, contatos de legado e desejos póstumos é um ato de cuidado e responsabilidade com quem amamos.",
-    feedback: "A vulnerabilidade digital é real: conversar abertamente com pessoas queridas sobre senhas mestras, contatos de legado e desejos póstumos é um ato de cuidado e responsabilidade com quem amamos."
-  }
-];
+// Exporta QUIZ_QUESTIONS normalizado para compatibilidade com todos os módulos do sistema
+export const QUIZ_QUESTIONS = quizQuestions.map((q) => {
+  const categoryKey = CATEGORY_NAME_TO_KEY[q.categoria] || "BLOCO_A";
+  const correctOpt = q.alternativas.find((a) => a.correta === true);
+  const normalizedOptions = q.alternativas.map((a) => ({
+    ...a,
+    text: a.texto
+  }));
+
+  return {
+    ...q,
+    category: categoryKey,
+    question: `${q.id}. ${q.pergunta}`,
+    options: normalizedOptions,
+    correctAnswer: q.tipo === "conhecimento" ? (correctOpt?.id || null) : null,
+    complement: q.feedback
+  };
+});
+
+// Perguntas reflexivas (Bloco D) também mapeadas em BONUS_QUESTIONS para relatórios analíticos
+export const BONUS_QUESTIONS = QUIZ_QUESTIONS.filter((q) => q.tipo === "reflexao").map(
+  (q, idx) => ({
+    ...q,
+    id: `bonus_${idx + 1}`,
+    questionIdNumeric: q.id,
+    title: `${q.categoria} (Questão ${q.id})`,
+    reflection: q.feedback
+  })
+);
