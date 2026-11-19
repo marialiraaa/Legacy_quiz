@@ -2146,17 +2146,16 @@ body::after {
   border-color: #fca5a5;
 }
 
-/* Responsividade Mobile Compacta (Viewport Única 100dvh - Sem Rolagem Vertical) */
+/* Responsividade Mobile Compacta (Com suporte a rolagem fluida quando o feedback e termômetro emocional abrem) */
 @media (max-width: 768px) {
   .app-wrapper:has(.gamified-quiz-screen) {
-    height: 100vh;
-    height: 100dvh;
+    min-height: 100vh;
     min-height: 100dvh;
-    max-height: 100dvh;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: auto;
   }
 
   .app-wrapper:has(.gamified-quiz-screen) > main {
@@ -2197,7 +2196,7 @@ body::after {
   }
 
   .app-wrapper:has(.gamified-quiz-screen) .header-arch {
-    padding: 14px 18px;
+    padding: 12px 16px;
     border-radius: 20px;
     width: 100%;
     max-width: 100%;
@@ -2207,26 +2206,24 @@ body::after {
 
   .app-wrapper:has(.gamified-quiz-screen) .header-arch h1,
   .app-wrapper:has(.gamified-quiz-screen) .header-arch h2 {
-    font-size: clamp(1.05rem, 2.35dvh, 1.22rem);
-    line-height: 1.32;
+    font-size: clamp(1rem, 2.25dvh, 1.18rem);
+    line-height: 1.3;
     text-align: center;
   }
 
-  /* 2. Distribuição Vertical (100dvh Flexbox sem espaço em branco na base) */
+  /* 2. Distribuição Vertical no Mobile (sem sobreposição dos botões) */
   .gamified-quiz-screen {
     flex: 1;
-    min-height: 0;
     width: 100%;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
     padding: 4px 14px calc(14px + env(safe-area-inset-bottom, 0px));
-    overflow: hidden;
+    overflow: visible;
   }
 
   .gamified-quiz-card {
     flex: 1;
-    min-height: 0;
     width: 100%;
     display: flex;
     flex-direction: column;
@@ -2275,31 +2272,29 @@ body::after {
 
   .gamified-question-stage {
     flex: 1;
-    min-height: 0;
     display: flex;
     flex-direction: column;
-    justify-content: space-evenly;
-    gap: 10px;
+    justify-content: flex-start;
+    gap: 9px;
   }
 
   /* 3. Container da Imagem Ilustrativa Compacto e Proporcional */
   .gamified-illustration-box {
     padding: 6px 12px;
     border-radius: 16px;
-    flex: 0 1 auto;
-    min-height: 0;
+    flex: 0 0 auto;
   }
 
   .gamified-illustration-img {
-    max-height: 16.5vh;
-    max-height: 16.5dvh;
+    max-height: 15.5vh;
+    max-height: 15.5dvh;
     width: auto;
     max-width: 100%;
     object-fit: contain;
   }
 
   .gamified-question-stage.is-confirmed-stage {
-    gap: 7px;
+    gap: 6px;
   }
 
   .gamified-question-stage.is-confirmed-stage .gamified-illustration-box {
@@ -2307,32 +2302,32 @@ body::after {
   }
 
   .gamified-question-stage.is-confirmed-stage .gamified-illustration-img {
-    max-height: 9vh;
-    max-height: 9dvh;
+    max-height: 7.5vh;
+    max-height: 7.5dvh;
   }
 
-  /* 4. Alternativas (A, B, C) com Cards e Fontes Maiores */
+  /* 4. Alternativas (A, B, C) com Cards e Fontes Bem Ajustados */
   .options-row {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 9px;
     margin-top: 0;
     flex-shrink: 0;
   }
 
   .gamified-question-stage.is-confirmed-stage .options-row {
-    gap: 7px;
+    gap: 6px;
   }
 
   .option-card {
-    padding: 13px 14px;
-    gap: 12px;
-    border-radius: 16px;
+    padding: 11px 13px;
+    gap: 11px;
+    border-radius: 15px;
     border-width: 2px;
   }
 
   .gamified-question-stage.is-confirmed-stage .option-card {
-    padding: 10px 12px;
+    padding: 8px 11px;
   }
 
   .option-card.selected,
@@ -2343,15 +2338,15 @@ body::after {
   }
 
   .option-badge {
-    width: 36px;
-    height: 36px;
-    font-size: 1rem;
+    width: 34px;
+    height: 34px;
+    font-size: 0.96rem;
     border-radius: 10px;
   }
 
   .option-text {
-    font-size: clamp(0.93rem, 2.02dvh, 1.03rem);
-    line-height: 1.34;
+    font-size: clamp(0.88rem, 1.92dvh, 0.98rem);
+    line-height: 1.32;
     font-weight: 500;
   }
 
@@ -2362,8 +2357,8 @@ body::after {
   }
 
   .gamified-feedback-balloon {
-    padding: 9px 12px;
-    border-radius: 13px;
+    padding: 8px 11px;
+    border-radius: 12px;
     gap: 3px;
     flex-shrink: 0;
   }
@@ -2373,36 +2368,38 @@ body::after {
   }
 
   .gamified-feedback-icon {
-    font-size: 1rem;
+    font-size: 0.96rem;
   }
 
   .gamified-feedback-title {
-    font-size: 0.85rem;
+    font-size: 0.84rem;
   }
 
   .gamified-feedback-text {
-    font-size: clamp(0.79rem, 1.72dvh, 0.86rem);
-    line-height: 1.32;
+    font-size: clamp(0.77rem, 1.68dvh, 0.84rem);
+    line-height: 1.3;
   }
 
-  /* 5. Barra Inferior Ancorada na Base com Respiro Confortável */
+  /* 5. Barra Inferior Ancorada na Base sem sobrepor o Termômetro de Emoções */
   .gamified-action-bar {
     gap: 10px;
-    margin-top: auto;
-    padding-top: 4px;
+    margin-top: 4px;
+    padding-top: 6px;
     flex-shrink: 0;
+    position: relative;
+    z-index: 5;
   }
 
   .gamified-btn-primary,
   .btn-confirm-answer,
   .btn-next-question {
-    padding: 14px 18px;
-    font-size: 0.98rem;
+    padding: 13px 16px;
+    font-size: 0.95rem;
   }
 
   .gamified-btn-exit {
-    padding: 14px 16px;
-    font-size: 0.9rem;
+    padding: 13px 15px;
+    font-size: 0.88rem;
   }
 }
 
@@ -3223,7 +3220,7 @@ body::after {
   margin: 0 0 36px;
 }
 
-/* 4 Emotion Cards Row matching reference photo */
+/* 4 Emotion Cards Row matching emoji style */
 .emotion-cards-row {
   display: flex;
   justify-content: center;
@@ -3247,31 +3244,40 @@ body::after {
   width: 98px;
   height: 98px;
   border-radius: 22px;
-  background: linear-gradient(145deg, #f8fafc, #edf2f7);
-  border: 2px solid rgba(226, 232, 240, 0.9);
+  background: #ffffff;
+  border: 2px solid #e2e8f0;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.06), inset 0 1px 1px #ffffff;
+  transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.05);
   outline: none;
   padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.exit-emotion-emoji {
+  font-size: 3.1rem;
+  line-height: 1;
+  user-select: none;
 }
 
 .emotion-card-btn:hover {
   transform: translateY(-3px) scale(1.04);
   background: #ffffff;
-  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.1), inset 0 1px 2px #ffffff;
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.1);
   border-color: #cbd5e1;
 }
 
-/* Active / Selected Neumorphic Inset state matching card 4 in reference photo */
 .emotion-card-btn.selected {
-  background: #e2e8f0;
-  border-color: #94a3b8;
-  box-shadow: inset 0 3px 6px rgba(0, 0, 0, 0.14), 0 0 0 3px rgba(148, 163, 184, 0.45);
-  transform: translateY(1px);
+  transform: scale(1.08);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+  border-width: 2.5px;
+}
+
+.emotion-card-btn.dimmed {
+  opacity: 0.45;
 }
 
 .emotion-card-btn:focus-visible {
@@ -3290,6 +3296,49 @@ body::after {
 .emotion-card-label.selected {
   color: #0f172a;
   font-weight: 800;
+}
+
+@media (max-width: 600px) {
+  .exit-feedback-title {
+    font-size: 1.6rem;
+  }
+
+  .exit-feedback-subtitle {
+    font-size: 0.95rem;
+    margin-bottom: 24px;
+  }
+
+  .emotion-cards-row {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    max-width: 340px;
+    margin-bottom: 28px;
+  }
+
+  .emotion-card-wrapper {
+    width: 100%;
+    gap: 8px;
+  }
+
+  .emotion-card-btn {
+    width: 84px;
+    height: 84px;
+    border-radius: 18px;
+  }
+
+  .exit-emotion-emoji {
+    font-size: 2.6rem;
+  }
+
+  .emotion-card-label {
+    font-size: 0.88rem;
+  }
+
+  .exit-feedback-actions {
+    flex-direction: column-reverse;
+    gap: 12px;
+  }
 }
 
 /* Exit Action Buttons */

@@ -1628,64 +1628,11 @@
     const [selectedId, setSelectedId] = useState(null);
     const [isCompleted, setIsCompleted] = useState(false);
 
-    function FeltBadIcon() {
-      return h('svg', { width: 68, height: 68, viewBox: '0 0 72 72', fill: 'none' },
-        h('circle', { cx: 36, cy: 36, r: 32, fill: '#FBB03B' }),
-        h('ellipse', { cx: 26, cy: 33, rx: 6.5, ry: 8, fill: '#1E293B' }),
-        h('circle', { cx: 28, cy: 30, r: 2.8, fill: '#FFFFFF' }),
-        h('circle', { cx: 24.5, cy: 36, r: 1.4, fill: '#FFFFFF' }),
-        h('ellipse', { cx: 46, cy: 33, rx: 6.5, ry: 8, fill: '#1E293B' }),
-        h('circle', { cx: 48, cy: 30, r: 2.8, fill: '#FFFFFF' }),
-        h('circle', { cx: 44.5, cy: 36, r: 1.4, fill: '#FFFFFF' }),
-        h('path', { d: 'M21 21C24 23 29 25 31 25', stroke: '#1E293B', strokeWidth: 2.5, strokeLinecap: 'round' }),
-        h('path', { d: 'M51 21C48 23 43 25 41 25', stroke: '#1E293B', strokeWidth: 2.5, strokeLinecap: 'round' }),
-        h('path', { d: 'M30 50C33 46 39 46 42 50', stroke: '#1E293B', strokeWidth: 3, strokeLinecap: 'round' })
-      );
-    }
-
-    function DislikedTopicIcon() {
-      return h('svg', { width: 68, height: 68, viewBox: '0 0 72 72', fill: 'none' },
-        h('circle', { cx: 36, cy: 36, r: 32, fill: '#2980B9' }),
-        h('ellipse', { cx: 25, cy: 34, rx: 6.5, ry: 6.5, fill: '#1E293B' }),
-        h('circle', { cx: 22, cy: 34, r: 2.2, fill: '#FFFFFF' }),
-        h('path', { d: 'M18 29H32', stroke: '#2980B9', strokeWidth: 4, strokeLinecap: 'round' }),
-        h('path', { d: 'M18 27C21 27 28 27 31 29', stroke: '#0F172A', strokeWidth: 2.5, strokeLinecap: 'round' }),
-        h('ellipse', { cx: 47, cy: 34, rx: 6.5, ry: 6.5, fill: '#1E293B' }),
-        h('circle', { cx: 44, cy: 34, r: 2.2, fill: '#FFFFFF' }),
-        h('path', { d: 'M40 29H54', stroke: '#2980B9', strokeWidth: 4, strokeLinecap: 'round' }),
-        h('path', { d: 'M54 27C51 27 44 27 41 29', stroke: '#0F172A', strokeWidth: 2.5, strokeLinecap: 'round' }),
-        h('path', { d: 'M28 50L44 46', stroke: '#0F172A', strokeWidth: 3, strokeLinecap: 'round' })
-      );
-    }
-
-    function HeavyTopicIcon() {
-      return h('svg', { width: 68, height: 68, viewBox: '0 0 72 72', fill: 'none' },
-        h('circle', { cx: 36, cy: 36, r: 32, fill: '#8E44AD' }),
-        h('ellipse', { cx: 26, cy: 36, rx: 5, ry: 5.5, fill: '#1E293B' }),
-        h('circle', { cx: 27.5, cy: 34.5, r: 1.8, fill: '#FFFFFF' }),
-        h('ellipse', { cx: 46, cy: 36, rx: 5, ry: 5.5, fill: '#1E293B' }),
-        h('circle', { cx: 47.5, cy: 34.5, r: 1.8, fill: '#FFFFFF' }),
-        h('path', { d: 'M21 26C24 24 29 27 31 29', stroke: '#0F172A', strokeWidth: 2.5, strokeLinecap: 'round' }),
-        h('path', { d: 'M51 26C48 24 43 27 41 29', stroke: '#0F172A', strokeWidth: 2.5, strokeLinecap: 'round' }),
-        h('path', { d: 'M27 49C30 46 33 50 36 47C39 44 42 49 45 47', stroke: '#0F172A', strokeWidth: 2.8, strokeLinecap: 'round' }),
-        h('path', { d: 'M54 20C55 23 57 24 57 26C57 27.6 55.6 29 54 29C52.4 29 51 27.6 51 26C51 24 53 23 54 20Z', fill: '#7DD3FC' })
-      );
-    }
-
-    function NeutralFaceIcon() {
-      return h('svg', { width: 68, height: 68, viewBox: '0 0 72 72', fill: 'none' },
-        h('circle', { cx: 36, cy: 36, r: 32, fill: '#95A5A6' }),
-        h('circle', { cx: 26, cy: 34, r: 4.5, fill: '#1E293B' }),
-        h('circle', { cx: 46, cy: 34, r: 4.5, fill: '#1E293B' }),
-        h('line', { x1: 26, y1: 48, x2: 46, y2: 48, stroke: '#1E293B', strokeWidth: 3.2, strokeLinecap: 'round' })
-      );
-    }
-
     const options = [
-      { id: 'felt_bad', label: 'Me senti mal', emoji: '🥺', icon: FeltBadIcon },
-      { id: 'disliked_topic', label: 'Não gostei do assunto', emoji: '😒', icon: DislikedTopicIcon },
-      { id: 'heavy_topic', label: 'Achei um tema pesado', emoji: '😰', icon: HeavyTopicIcon },
-      { id: 'no_comment', label: 'Nada a declarar', emoji: '😐', icon: NeutralFaceIcon }
+      { id: 'felt_bad', label: 'Me senti mal', emoji: '🥺', color: '#ef6c00', bg: '#fff3e0' },
+      { id: 'disliked_topic', label: 'Não gostei do assunto', emoji: '😒', color: '#3b82f6', bg: '#eff6ff' },
+      { id: 'heavy_topic', label: 'Achei um tema pesado', emoji: '😰', color: '#c62828', bg: '#ffebee' },
+      { id: 'no_comment', label: 'Nada a declarar', emoji: '😐', color: '#f57f17', bg: '#fffde7' }
     ];
 
     const handleSelect = (id) => {
@@ -1742,16 +1689,24 @@
         h('div', { className: 'emotion-cards-row', role: 'radiogroup' },
           options.map(opt => {
             const isSelected = selectedId === opt.id;
+            const hasSelection = Boolean(selectedId);
             return h('div', { key: opt.id, className: 'emotion-card-wrapper' },
               h('button', {
                 type: 'button',
                 role: 'radio',
                 'aria-checked': isSelected,
-                className: `emotion-card-btn ${isSelected ? 'selected' : ''}`,
+                className: `emotion-card-btn ${isSelected ? 'selected' : ''} ${hasSelection && !isSelected ? 'dimmed' : ''}`,
+                style: {
+                  borderColor: isSelected ? opt.color : undefined,
+                  backgroundColor: isSelected ? opt.bg : undefined
+                },
                 onClick: () => handleSelect(opt.id),
                 title: `${opt.emoji} ${opt.label}`
-              }, h(opt.icon)),
-              h('span', { className: `emotion-card-label ${isSelected ? 'selected' : ''}` }, opt.label)
+              }, h('span', { className: 'exit-emotion-emoji', role: 'img', 'aria-label': opt.label }, opt.emoji)),
+              h('span', {
+                className: `emotion-card-label ${isSelected ? 'selected' : ''}`,
+                style: { color: isSelected ? opt.color : undefined }
+              }, opt.label)
             );
           })
         ),
