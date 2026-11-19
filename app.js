@@ -1369,53 +1369,192 @@
   }
 
 
-  function CompletionScreen({ score, total, maxStreak = 0, nickname, onPlayAgain, onReview, onExport, sound }) {
-    const pct = Math.round((score / total) * 100);
+  function CompletionScreen({ score = 0, total = 12, maxStreak = 0, nickname, onPlayAgain, onReview, onExport, sound }) {
+    const canvasRef = useRef(null);
+    const patente = score >= 9
+      ? {
+          tier: 'gold',
+          medalEmoji: '🥇',
+          badgeIcon: '👑',
+          tierLabel: 'Medalha de Ouro',
+          title: 'Guardião do Legado Digital',
+          message: 'Excelente! Você domina as boas práticas e sabe como proteger sua história online!'
+        }
+      : score >= 5
+      ? {
+          tier: 'silver',
+          medalEmoji: '🥈',
+          badgeIcon: '🛡️',
+          tierLabel: 'Medalha de Prata',
+          title: 'Navegador Consciente',
+          message: 'Você já manda bem nos cuidados digitais e agora conhece ferramentas importantes para o futuro!'
+        }
+      : {
+          tier: 'bronze',
+          medalEmoji: '🥉',
+          badgeIcon: '🧭',
+          tierLabel: 'Medalha de Bronze',
+          title: 'Explorador do Legado Digital',
+          message: 'Você deu o primeiro passo para entender como cuidar das suas memórias e contas online!'
+        };
 
-    return h('div', { className: 'screen-content' },
-      h('div', { className: 'card-surface thankyou-card' },
-        h('h2', { className: 'thankyou-title' }, 'OBRIGADO POR PARTICIPAR!'),
-        h('p', { className: 'thankyou-subtitle' },
-          nickname ? `Parabéns, ${nickname}! ` : '',
-          'Agradecemos o seu tempo e esforço ao completar o nosso quiz.'
-        ),
-        h('div', { className: 'laurel-container' },
-          h('img', {
-            src: 'assets/laurel-badge.png',
-            alt: 'Brasão de Conclusão',
-            className: 'laurel-img',
-            onError: (e) => { e.currentTarget.src = 'assets/frame-245.png'; }
-          })
-        ),
-        h('div', { className: 'completion-streak-banner' },
-          h('span', { className: 'completion-streak-flame' }, '🔥'),
-          h('span', { className: 'completion-streak-text' },
-            'Maior Sequência de Consciência: ',
-            h('strong', null, `${maxStreak} ${maxStreak === 1 ? 'questão' : 'seguidas'}`)
+    useEffect(() => {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+
+      let animId;
+      const dpr = window.devicePixelRatio || 1;
+      const w = window.innerWidth;
+      const hWin = window.innerHeight;
+      canvas.width = w * dpr;
+      canvas.height = hWin * dpr;
+      ctx.scale(dpr, dpr);
+
+      const colors = ['#22c55e', '#3b82f6', '#8b5cf6', '#f59e0b', '#ec4899', '#06b6d4', '#eab308'];
+      const particles = Array.from({ length: 65 }, () => ({
+        x: Math.random() * w,
+        y: Math.random() * -hWin * 0.6 - 10,
+        w: Math.random() * 8 + 5,
+        h: Math.random() * 5 + 4,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        vy: Math.random() * 2.4 + 1.4,
+        vx: (Math.random() - 0.5) * 1.8,
+        angle: Math.random() * Math.PI * 2,
+        spin: (Math.random() - 0.5) * 0.12,
+        opacity: 1
+      }));
+
+      const startTime = performance.now();
+      const durationMs = 4200;
+
+      const render = (now) => {
+        const elapsed = now - startTime;
+        ctx.clearRect(0, 0, w, hWin);
+        let active = 0;
+        particles.forEach((p) => {
+          p.x += p.vx;
+          p.y += p.vy;
+          p.angle += p.spin;
+          if (elapsed > durationMs * 0.65) {
+            p.opacity = Math.max(0, 1 - (elapsed - durationMs * 0.65) / (durationMs * 0.35));
+          }
+          if (p.y < hWin + 20 && p.opacity > 0.02) {
+            active += 1;
+            ctx.save();
+            ctx.globalAlpha = p.opacity;
+            ctx.translate(p.x, p.y);
+            ctx.rotate(p.angle);
+            ctx.fillStyle = p.color;
+            ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+            ctx.restore();
+          }
+        });
+        if (elapsed < durationMs && active > 0) {
+          animId = requestAnimationFrame(render);
+        } else {
+          ctx.clearRect(0, 0, w, hWin);
+        }
+      };
+
+      animId = requestAnimationFrame(render);
+      return () => {
+        if (animId) cancelAnimationFrame(animId);
+      };
+    }, []);
+
+    return h('div', { className: 'screen-content celebration-screen-wrapper' },
+      h('canvas', { ref: canvasRef, className: 'celebration-confetti-canvas', 'aria-hidden': 'true' }),
+      h('div', { className: 'celebration-container' },
+        h('div', { className: `celebration-hero-card tier-${patente.tier}` },
+          h('div', { className: 'celebration-kicker' }, '🎉 JORNADA CONCLUÍDA • PROJETO DAVI'),
+          h('h2', { className: 'celebration-greeting' },
+            nickname ? `Parabéns pela jornada, ${nickname}!` : 'Parabéns pela jornada!'
+          ),
+          h('div', { className: 'celebration-medal-wrapper medal-pop-anim' },
+            h('div', { className: `celebration-medal-circle tier-${patente.tier}` },
+              h('span', { className: 'celebration-medal-icon' }, patente.badgeIcon),
+              h('span', { className: 'celebration-medal-sub' }, patente.medalEmoji)
+            ),
+            h('span', { className: `celebration-tier-pill tier-${patente.tier}` },
+              `${patente.tierLabel} • Patente Desbloqueada`
+            )
+          ),
+          h('h3', { className: 'celebration-rank-title' }, patente.title),
+          h('p', { className: 'celebration-rank-message' }, patente.message),
+          h('div', { className: 'celebration-stats-row' },
+            h('div', { className: 'celebration-mini-card' },
+              h('div', { className: 'celebration-mini-label' }, 'Acertos de Conhecimento'),
+              h('div', { className: 'celebration-mini-value' },
+                h('span', { className: 'celebration-mini-icon' }, '🎯'),
+                h('strong', null, `${score} de ${total}`)
+              )
+            ),
+            h('div', { className: 'celebration-mini-card streak-highlight' },
+              h('div', { className: 'celebration-mini-label' }, 'Maior Sequência de Consciência'),
+              h('div', { className: 'celebration-mini-value' },
+                h('span', { className: 'celebration-mini-icon' }, '🔥'),
+                h('strong', null, `${maxStreak} ${maxStreak === 1 ? 'questão' : 'seguidas'}`)
+              )
+            )
+          ),
+          h('div', { className: 'celebration-reflection-note' },
+            h('span', null, '✨'),
+            h('span', null, 'Suas respostas nas perguntas de reflexão pessoal (Bloco D) foram registradas com sucesso!')
           )
         ),
-        h('div', { className: 'score-stats-grid' },
-          h('div', { className: 'score-stat-box' },
-            h('div', { className: 'score-number' }, `${score} / ${total}`),
-            h('div', { className: 'score-label' }, 'Acertos no Quiz')
+        h('div', { className: 'celebration-kickstart-card' },
+          h('div', { className: 'kickstart-header' },
+            h('span', { className: 'kickstart-header-icon' }, '🚀'),
+            h('div', null,
+              h('h4', { className: 'kickstart-title' }, 'Seu Pontapé Inicial'),
+              h('p', { className: 'kickstart-subtitle' }, '3 passos rápidos para organizar e proteger seu legado digital hoje mesmo:')
+            )
           ),
-          h('div', { className: 'score-stat-box' },
-            h('div', { className: 'score-number', style: { color: pct >= 70 ? '#16a34a' : '#2563eb' } }, `${pct}%`),
-            h('div', { className: 'score-label' }, 'Aproveitamento')
-          ),
-          h('div', { className: 'score-stat-box' },
-            h('div', { className: 'score-number', style: { color: '#8b5cf6' } }, '🏅'),
-            h('div', { className: 'score-label' },
-              pct >= 80 ? 'Mestre em Legado' : pct >= 50 ? 'Consciente Digital' : 'Explorador Inicial'
+          h('div', { className: 'kickstart-tips-list' },
+            h('a', {
+              href: 'https://myaccount.google.com/inactive',
+              target: '_blank',
+              rel: 'noopener noreferrer',
+              className: 'kickstart-tip-item kickstart-tip-link',
+              onClick: () => sound.playClick()
+            },
+              h('span', { className: 'kickstart-tip-badge' }, '1'),
+              h('div', { className: 'kickstart-tip-content' },
+                h('strong', null, 'Gerenciador de Contas Inativas do Google ↗'),
+                h('span', null, 'Defina contatos de confiança para receberem fotos/arquivos ou programe a exclusão após inatividade.')
+              )
+            ),
+            h('div', { className: 'kickstart-tip-item' },
+              h('span', { className: 'kickstart-tip-badge' }, '2'),
+              h('div', { className: 'kickstart-tip-content' },
+                h('strong', null, 'Memorial no Instagram e Facebook (Meta)'),
+                h('span', null, 'Em Central de Contas → Dados pessoais → Propriedade e controle, escolha entre transformar o perfil em memorial ou excluir.')
+              )
+            ),
+            h('div', { className: 'kickstart-tip-item' },
+              h('span', { className: 'kickstart-tip-badge' }, '3'),
+              h('div', { className: 'kickstart-tip-content' },
+                h('strong', null, 'Contato de Legado & Pessoa de Confiança'),
+                h('span', null, 'Adicione um Contato de Legado no seu celular (iOS/Android) e converse com alguém próximo sobre suas vontades digitais.')
+              )
             )
           )
         ),
-        h('div', { style: { display: 'flex', gap: 20, flexWrap: 'wrap', justifyContent: 'center', marginTop: 10 } },
-          h('button', { className: 'btn-outline-dark', style: { minWidth: 220 }, onClick: () => { sound.playClick(); onPlayAgain(); } }, 'JOGAR NOVAMENTE'),
-          h('button', { className: 'btn-outline-dark', style: { minWidth: 220 }, onClick: () => { sound.playClick(); onReview(); } }, 'VER RESPOSTAS')
-        ),
-        h('p', { className: 'thankyou-footer-text' },
-          'Esperamos que tenha se divertido e refletido sobre a importância de seus ativos digitais.'
+        h('div', { className: 'celebration-actions-footer' },
+          h('button', {
+            type: 'button',
+            className: 'celebration-btn-primary',
+            onClick: () => { sound.playClick(); onReview(); }
+          }, '📋 Revisar Gabarito & Continuar Pesquisa (Davi) →'),
+          h('div', { className: 'celebration-secondary-btns' },
+            h('button', {
+              type: 'button',
+              className: 'celebration-btn-secondary',
+              onClick: () => { sound.playClick(); onPlayAgain(); }
+            }, '🔄 Refazer o Quiz')
+          )
         )
       )
     );
