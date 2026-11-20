@@ -778,42 +778,37 @@ export function calcularAnaliticoCompleto(sessoes = [], filtroCategoria = "ALL")
 
   // 5. Análise de Desistências
   const catalogoMotivos = {
-    felt_bad: { id: "felt_bad", label: "Me senti mal", color: "#f59e0b", emoji: "🥺" },
-    disliked_topic: {
-      id: "disliked_topic",
-      label: "Não gostei do assunto",
-      color: "#3b82f6",
-      emoji: "😒"
-    },
-    heavy_topic: {
-      id: "heavy_topic",
-      label: "Achei um tema pesado",
-      color: "#8b5cf6",
-      emoji: "😰"
-    },
-    no_comment: {
-      id: "no_comment",
-      label: "Nada a declarar",
-      color: "#64748b",
-      emoji: "😐"
-    }
+    tranquilo: { id: "tranquilo", label: "Tranquilo", color: "#1b5e20", emoji: "😄" },
+    curioso: { id: "curioso", label: "Curioso", color: "#2e7d32", emoji: "🤔" },
+    neutro: { id: "neutro", label: "Neutro", color: "#f57f17", emoji: "😐" },
+    preocupado: { id: "preocupado", label: "Preocupado", color: "#ef6c00", emoji: "😟" },
+    desconfortavel: { id: "desconfortavel", label: "Desconfortável", color: "#c62828", emoji: "😰" }
+  };
+
+  const legadoParaNovoMotivo = {
+    no_comment: "neutro",
+    disliked_topic: "curioso",
+    felt_bad: "preocupado",
+    heavy_topic: "desconfortavel"
   };
 
   const contagemMotivos = {
-    felt_bad: 0,
-    disliked_topic: 0,
-    heavy_topic: 0,
-    no_comment: 0
+    tranquilo: 0,
+    curioso: 0,
+    neutro: 0,
+    preocupado: 0,
+    desconfortavel: 0
   };
   const contagemTelasSaida = {};
   let somaTempoAteSaida = 0;
 
   desistencias.forEach((s) => {
-    const mId = s.desistencia?.motivoId || "no_comment";
+    const rawId = s.desistencia?.motivoId || "neutro";
+    const mId = legadoParaNovoMotivo[rawId] || rawId;
     if (contagemMotivos[mId] !== undefined) {
       contagemMotivos[mId] += 1;
     } else {
-      contagemMotivos.no_comment += 1;
+      contagemMotivos.neutro += 1;
     }
 
     const tela = s.desistencia?.telaOuQuestaoDeSaida || "DESCONHECIDO";

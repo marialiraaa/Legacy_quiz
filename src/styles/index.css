@@ -2153,13 +2153,13 @@ body::after {
     min-height: 100dvh;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
+    justify-content: flex-start;
     overflow-x: hidden;
     overflow-y: auto;
   }
 
   .app-wrapper:has(.gamified-quiz-screen) > main {
-    flex: 1;
+    flex: 0 1 auto;
     min-height: 0;
     display: flex;
     flex-direction: column;
@@ -2211,24 +2211,24 @@ body::after {
     text-align: center;
   }
 
-  /* 2. Distribuição Vertical no Mobile (sem sobreposição dos botões) */
+  /* 2. Distribuição Vertical no Mobile (botões logo abaixo das alternativas) */
   .gamified-quiz-screen {
-    flex: 1;
+    flex: 0 1 auto;
     width: 100%;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
-    padding: 4px 14px calc(14px + env(safe-area-inset-bottom, 0px));
+    justify-content: flex-start;
+    padding: 4px 14px calc(18px + env(safe-area-inset-bottom, 0px));
     overflow: visible;
   }
 
   .gamified-quiz-card {
-    flex: 1;
+    flex: 0 1 auto;
     width: 100%;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
-    gap: 8px;
+    justify-content: flex-start;
+    gap: 10px;
   }
 
   .gamified-top-header {
@@ -2271,7 +2271,7 @@ body::after {
   }
 
   .gamified-question-stage {
-    flex: 1;
+    flex: 0 1 auto;
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
@@ -3220,14 +3220,14 @@ body::after {
   margin: 0 0 36px;
 }
 
-/* 4 Emotion Cards Row matching emoji style */
+/* 5 Emotion Cards Row matching emoji style */
 .emotion-cards-row {
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  gap: 22px;
+  gap: 18px;
   width: 100%;
-  max-width: 720px;
+  max-width: 760px;
   margin-bottom: 38px;
   flex-wrap: wrap;
 }
@@ -3236,13 +3236,13 @@ body::after {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
-  width: 130px;
+  gap: 10px;
+  width: 118px;
 }
 
 .emotion-card-btn {
-  width: 98px;
-  height: 98px;
+  width: 92px;
+  height: 92px;
   border-radius: 22px;
   background: #ffffff;
   border: 2px solid #e2e8f0;
@@ -3258,7 +3258,7 @@ body::after {
 }
 
 .exit-emotion-emoji {
-  font-size: 3.1rem;
+  font-size: 2.9rem;
   line-height: 1;
   user-select: none;
 }
@@ -3285,11 +3285,11 @@ body::after {
 }
 
 .emotion-card-label {
-  font-size: 0.96rem;
+  font-size: 0.92rem;
   font-weight: 600;
   color: #334155;
   text-align: center;
-  line-height: 1.35;
+  line-height: 1.3;
   transition: color 0.2s ease, font-weight 0.2s ease;
 }
 
@@ -3309,30 +3309,31 @@ body::after {
   }
 
   .emotion-cards-row {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 16px;
-    max-width: 340px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 14px;
+    max-width: 360px;
     margin-bottom: 28px;
   }
 
   .emotion-card-wrapper {
-    width: 100%;
+    width: 96px;
     gap: 8px;
   }
 
   .emotion-card-btn {
-    width: 84px;
-    height: 84px;
+    width: 78px;
+    height: 78px;
     border-radius: 18px;
   }
 
   .exit-emotion-emoji {
-    font-size: 2.6rem;
+    font-size: 2.35rem;
   }
 
   .emotion-card-label {
-    font-size: 0.88rem;
+    font-size: 0.82rem;
   }
 
   .exit-feedback-actions {

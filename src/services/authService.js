@@ -223,6 +223,15 @@ export async function logoutAdmin() {
  * @returns {function(): void} Unsubscribe
  */
 export function observarEstadoAuthAdmin(callback) {
+  if (!auth) {
+    callback({
+      user: null,
+      authorized: false,
+      loading: false,
+      reason: "Firebase Authentication não configurado (.env ausente)."
+    });
+    return () => {};
+  }
   return onAuthStateChanged(auth, async (user) => {
     if (!user) {
       callback({

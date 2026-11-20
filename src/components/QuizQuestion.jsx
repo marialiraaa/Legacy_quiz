@@ -53,14 +53,14 @@ export function QuizQuestion({
     Math.round(((currentIndex + 1) / totalQuestions) * 100)
   );
 
-  // Reinicia estados locais e o cronômetro a cada mudança de questão
+  // Reinicia estados locais e o cronômetro apenas quando muda de questão
   useEffect(() => {
     setSelectedOption(userAnswer || null);
     setIsConfirmed(Boolean(userAnswer));
     setSelectedEmotion(null);
     answerPayloadRef.current = null;
     startTimeRef.current = Date.now();
-  }, [questionData.id, currentIndex, userAnswer]);
+  }, [questionData.id, currentIndex]);
 
   // Etapa 1: Seleção sem validação imediata (Anti-Misclick)
   const handleSelectOption = (optId) => {

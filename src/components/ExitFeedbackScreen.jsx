@@ -2,32 +2,44 @@ import React, { useState } from 'react';
 
 const EXIT_OPTIONS = [
   {
-    id: 'felt_bad',
-    label: 'Me senti mal',
-    emoji: '🥺',
+    id: 'tranquilo',
+    score: 5,
+    emoji: '😄',
+    label: 'Tranquilo',
+    color: '#1b5e20',
+    bg: '#e8f5e9'
+  },
+  {
+    id: 'curioso',
+    score: 4,
+    emoji: '🤔',
+    label: 'Curioso',
+    color: '#2e7d32',
+    bg: '#f1f8e9'
+  },
+  {
+    id: 'neutro',
+    score: 3,
+    emoji: '😐',
+    label: 'Neutro',
+    color: '#f57f17',
+    bg: '#fffde7'
+  },
+  {
+    id: 'preocupado',
+    score: 2,
+    emoji: '😟',
+    label: 'Preocupado',
     color: '#ef6c00',
     bg: '#fff3e0'
   },
   {
-    id: 'disliked_topic',
-    label: 'Não gostei do assunto',
-    emoji: '😒',
-    color: '#3b82f6',
-    bg: '#eff6ff'
-  },
-  {
-    id: 'heavy_topic',
-    label: 'Achei um tema pesado',
+    id: 'desconfortavel',
+    score: 1,
     emoji: '😰',
+    label: 'Desconfortável',
     color: '#c62828',
     bg: '#ffebee'
-  },
-  {
-    id: 'no_comment',
-    label: 'Nada a declarar',
-    emoji: '😐',
-    color: '#f57f17',
-    bg: '#fffde7'
   }
 ];
 
