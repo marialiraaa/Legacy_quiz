@@ -103,14 +103,14 @@
       id: 5,
       tipo: "conhecimento",
       categoria: "Bloco B: Privacidade e Memória",
-      pergunta: "Qual é uma consequência de compartilhar mensagens e mídias em ambientes digitais?",
+      pergunta: "O que acontece com as mensagens e mídias depois que são compartilhadas em ambientes digitais?",
       imagem: "img/04 oracao.jpg",
       alternativas: [
-        { id: "A", texto: "Esses registros podem permanecer acessíveis e influenciar como você será lembrado.", correta: true },
-        { id: "B", texto: "Todas as conversas privadas são apagadas automaticamente quando a conta fica inativa.", correta: false },
-        { id: "C", texto: "Os arquivos enviados deixam de existir assim que o aplicativo é desinstalado do celular.", correta: false }
+        { id: "A", texto: "Podem permanecer armazenadas por anos, formando um histórico que influencia como você será lembrado.", correta: true },
+        { id: "B", texto: "São apagadas automaticamente de todos os dispositivos assim que você sai da conversa.", correta: false },
+        { id: "C", texto: "Deixam de existir na internet no momento em que o aplicativo é desinstalado do celular.", correta: false }
       ],
-      feedback: "Diferente de uma conversa presencial, o que vai para a nuvem ou para o chat de outras pessoas pode durar anos — moldando sua memória digital e exigindo cuidado com a privacidade."
+      feedback: "Diferente de uma conversa presencial, o que é compartilhado online pode ser salvo, encaminhado e acessado por muito tempo — construindo a sua memória digital."
     },
     {
       id: 6,
@@ -119,9 +119,9 @@
       pergunta: "O que acontece com fotos salvas na nuvem após a morte do titular da conta?",
       imagem: "img/image 43.png",
       alternativas: [
-        { id: "A", texto: "São excluídas imediatamente assim que o celular fica sem conexão com a internet.", correta: false },
-        { id: "B", texto: "Tornam-se públicas automaticamente para que amigos possam baixar.", correta: false },
-        { id: "C", texto: "Elas permanecem armazenadas ou são encerradas conforme as configurações prévias e regras do serviço.", correta: true }
+        { id: "A", texto: "São transferidas automaticamente para o e-mail de parentes de primeiro grau após o registro de óbito.", correta: false },
+        { id: "B", texto: "Permanecem armazenadas ou são encerradas conforme as configurações prévias e regras do serviço.", correta: true },
+        { id: "C", texto: "Ficam acessíveis a qualquer familiar que comprove vínculo ou assuma o pagamento da assinatura.", correta: false }
       ],
       feedback: "Cada plataforma tem uma política própria. Sem uma configuração prévia, a família pode ter muita dificuldade — ou até precisar de autorização judicial — para recuperar fotos de família."
     },
@@ -143,7 +143,7 @@
       tipo: "conhecimento",
       categoria: "Bloco B: Privacidade e Memória",
       pergunta: "Qual é a finalidade de uma mensagem póstuma digital?",
-      imagem: "img/ceudex 1.png",
+      imagem: "img/novasorações.png",
       alternativas: [
         { id: "A", texto: "Transferir automaticamente a titularidade bancária para outra pessoa.", correta: false },
         { id: "B", texto: "Manter o perfil ativo respondendo mensagens como se o usuário estivesse online.", correta: false },
@@ -157,12 +157,13 @@
       id: 9,
       tipo: "conhecimento",
       categoria: "Bloco C: Plataformas na Prática",
+      medirEmocao: true,
       pergunta: "O que acontece com um perfil no Facebook ou Instagram após o falecimento do usuário?",
       imagem: "img/MemorialDigital2.png",
       alternativas: [
-        { id: "A", texto: "Pode ser transformado em memorial (com a tag 'Em memória') ou excluído mediante solicitação.", correta: true },
-        { id: "B", texto: "Continua aparecendo normalmente nas sugestões de amizade e lembretes de aniversário.", correta: false },
-        { id: "C", texto: "É bloqueado permanentemente sem possibilidade de exclusão pela família.", correta: false }
+        { id: "A", texto: "O Facebook permite transformar o perfil em memorial ou solicitar a exclusão da conta, enquanto o Instagram também oferece a opção de transformar o perfil em memorial.", correta: true },
+        { id: "B", texto: "Ambas as redes continuam exibindo o perfil em sugestões e lembretes de aniversário.", correta: false },
+        { id: "C", texto: "As contas são bloqueadas permanentemente sem opção de memorial ou pedido familiar.", correta: false }
       ],
       feedback: "A Meta permite transformar contas em memoriais (congelando o perfil para homenagens) ou removê-las permanentemente quando familiares enviam a documentação necessária."
     },
@@ -170,12 +171,24 @@
       id: 10,
       tipo: "conhecimento",
       categoria: "Bloco C: Plataformas na Prática",
-      pergunta: "O que permite a ferramenta 'Gerenciador de Contas Inativas' do Google?",
-      imagem: "img/Lapide Twitter.png",
+      pergunta: "Qual é a principal finalidade do 'Gerenciador de Contas Inativas' oferecido pelo Google?",
+      imagem: "img/ceudex 1.png",
       alternativas: [
-        { id: "A", texto: "Aumentar gratuitamente o espaço de armazenamento do Google Drive e do Gmail.", correta: false },
-        { id: "B", texto: "Escolher quem receberá acesso a dados (como Fotos e Drive) ou mandar apagar tudo após um tempo sem uso.", correta: true },
-        { id: "C", texto: "Compartilhar sua senha em tempo real com até dez contatos de emergência.", correta: false }
+        {
+          id: "A",
+          texto: "Transferir automaticamente o histórico de pesquisas e senhas salvas para uma nova conta principal após 30 dias sem login.",
+          correta: false
+        },
+        {
+          id: "B",
+          texto: "Definir contatos de confiança para receberem acesso a dados específicos (como Fotos e Drive) ou programar a exclusão da conta após um período de inatividade.",
+          correta: true
+        },
+        {
+          id: "C",
+          texto: "Gerar chaves de recuperação de dois fatores para que familiares possam redefinir a senha e assumir o controle total do perfil.",
+          correta: false
+        }
       ],
       feedback: "Pouca gente conhece, mas o Google tem essa função nativa! Você define um prazo (ex: 3 meses sem login) e decide se quer avisar contatos de confiança ou excluir a conta."
     },
@@ -183,12 +196,12 @@
       id: 11,
       tipo: "conhecimento",
       categoria: "Bloco C: Plataformas na Prática",
-      pergunta: "Qual é o principal risco de não planejar o acesso às contas digitais?",
+      pergunta: "Qual é o principal risco de não planejar o destino das suas contas e arquivos digitais antes de falecer?",
       imagem: "img/myspace.png",
       alternativas: [
-        { id: "A", texto: "As senhas serem divulgadas automaticamente para os contatos da agenda.", correta: false },
-        { id: "B", texto: "Os aplicativos cobrarem multas mensais por falta de movimentação.", correta: false },
-        { id: "C", texto: "Arquivos afetivos, documentos e contas importantes ficarem inacessíveis para a família.", correta: true }
+        { id: "A", texto: "O suporte das plataformas liberar o acesso livremente mediante pedido informal dos familiares.", correta: false },
+        { id: "B", texto: "Todos os arquivos privados serem convertidos automaticamente para perfis públicos.", correta: false },
+        { id: "C", texto: "Memórias afetivas, documentos e serviços importantes ficarem permanentemente inacessíveis para a família.", correta: true }
       ],
       feedback: "Por questões de privacidade e termos de uso, as empresas não entregam senhas a familiares sem autorização prévia, o que pode trancar lembranças e registros importantes."
     },
@@ -196,6 +209,7 @@
       id: 12,
       tipo: "conhecimento",
       categoria: "Bloco C: Plataformas na Prática",
+      medirEmocao: true,
       pergunta: "O que pode ocorrer com os bens digitais de uma pessoa após sua morte?",
       imagem: "img/cross-01.png",
       alternativas: [
@@ -211,6 +225,7 @@
       id: 13,
       tipo: "reflexao",
       categoria: "Bloco D: Sua Reflexão",
+      medirEmocao: true,
       pergunta: "Se alguém conhecesse você apenas pelo que está salvo nas suas contas hoje, o que descobriria?",
       imagem: "img/05 bots.jpg",
       alternativas: [
@@ -224,6 +239,7 @@
       id: 14,
       tipo: "reflexao",
       categoria: "Bloco D: Sua Reflexão",
+      medirEmocao: true,
       pergunta: "Se você não pudesse acessar suas contas amanhã, o que gostaria que fosse feito com seus dados?",
       imagem: "img/novasoracoes.png",
       alternativas: [

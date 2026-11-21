@@ -113,9 +113,9 @@ export const quizQuestions = [
     pergunta: "O que acontece com as mensagens e mídias depois que são compartilhadas em ambientes digitais?",
     imagem: "img/04 oracao.jpg",
     alternativas: [
-      { "id": "A", "texto": "Podem permanecer armazenadas por anos, formando um histórico que influencia como você será lembrado.", "correta": true },
-      { "id": "B", "texto": "São apagadas automaticamente de todos os dispositivos assim que você sai da conversa.", "correta": false },
-      { "id": "C", "texto": "Deixam de existir na internet no momento em que o aplicativo é desinstalado do celular.", "correta": false }
+      { id: "A", texto: "Podem permanecer armazenadas por anos, formando um histórico que influencia como você será lembrado.", correta: true },
+      { id: "B", texto: "São apagadas automaticamente de todos os dispositivos assim que você sai da conversa.", correta: false },
+      { id: "C", texto: "Deixam de existir na internet no momento em que o aplicativo é desinstalado do celular.", correta: false }
     ],
     feedback: "Diferente de uma conversa presencial, o que é compartilhado online pode ser salvo, encaminhado e acessado por muito tempo — construindo a sua memória digital."
   },
