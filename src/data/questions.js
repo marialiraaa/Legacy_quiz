@@ -110,14 +110,14 @@ export const quizQuestions = [
     id: 5,
     tipo: "conhecimento",
     categoria: "Bloco B: Privacidade e Memória",
-    pergunta: "Qual é uma consequência de compartilhar mensagens e mídias em ambientes digitais?",
+    pergunta: "O que acontece com as mensagens e mídias depois que são compartilhadas em ambientes digitais?",
     imagem: "img/04 oracao.jpg",
     alternativas: [
-      { id: "A", texto: "Esses registros podem permanecer acessíveis e influenciar como você será lembrado.", correta: true },
-      { id: "B", texto: "Todas as conversas privadas são apagadas automaticamente quando a conta fica inativa.", correta: false },
-      { id: "C", texto: "Os arquivos enviados deixam de existir assim que o aplicativo é desinstalado do celular.", correta: false }
+      { "id": "A", "texto": "Podem permanecer armazenadas por anos, formando um histórico que influencia como você será lembrado.", "correta": true },
+      { "id": "B", "texto": "São apagadas automaticamente de todos os dispositivos assim que você sai da conversa.", "correta": false },
+      { "id": "C", "texto": "Deixam de existir na internet no momento em que o aplicativo é desinstalado do celular.", "correta": false }
     ],
-    feedback: "Diferente de uma conversa presencial, o que vai para a nuvem ou para o chat de outras pessoas pode durar anos — moldando sua memória digital e exigindo cuidado com a privacidade."
+    feedback: "Diferente de uma conversa presencial, o que é compartilhado online pode ser salvo, encaminhado e acessado por muito tempo — construindo a sua memória digital."
   },
   {
     id: 6,
@@ -126,9 +126,9 @@ export const quizQuestions = [
     pergunta: "O que acontece com fotos salvas na nuvem após a morte do titular da conta?",
     imagem: "img/image 43.png",
     alternativas: [
-      { id: "A", texto: "São excluídas imediatamente assim que o celular fica sem conexão com a internet.", correta: false },
-      { id: "B", texto: "Tornam-se públicas automaticamente para que amigos possam baixar.", correta: false },
-      { id: "C", texto: "Elas permanecem armazenadas ou são encerradas conforme as configurações prévias e regras do serviço.", correta: true }
+      { id: "A", texto: "São transferidas automaticamente para o e-mail de parentes de primeiro grau após o registro de óbito.", correta: false },
+      { id: "B", texto: "Permanecem armazenadas ou são encerradas conforme as configurações prévias e regras do serviço.", correta: true },
+      { id: "C", texto: "Ficam acessíveis a qualquer familiar que comprove vínculo ou assuma o pagamento da assinatura.", correta: false }
     ],
     feedback: "Cada plataforma tem uma política própria. Sem uma configuração prévia, a família pode ter muita dificuldade — ou até precisar de autorização judicial — para recuperar fotos de família."
   },
@@ -203,12 +203,12 @@ export const quizQuestions = [
     id: 11,
     tipo: "conhecimento",
     categoria: "Bloco C: Plataformas na Prática",
-    pergunta: "Qual é o principal risco de não planejar o acesso às contas digitais?",
+    pergunta: "Qual é o principal risco de não planejar o destino das suas contas e arquivos digitais antes de falecer?",
     imagem: "img/myspace.png",
     alternativas: [
-      { id: "A", texto: "As senhas serem divulgadas automaticamente para os contatos da agenda.", correta: false },
-      { id: "B", texto: "Os aplicativos cobrarem multas mensais por falta de movimentação.", correta: false },
-      { id: "C", texto: "Arquivos afetivos, documentos e contas importantes ficarem inacessíveis para a família.", correta: true }
+      { id: "A", texto: "O suporte das plataformas liberar o acesso livremente mediante pedido informal dos familiares.", correta: false },
+      { id: "B", texto: "Todos os arquivos privados serem convertidos automaticamente para perfis públicos.", correta: false },
+      { id: "C", texto: "Memórias afetivas, documentos e serviços importantes ficarem permanentemente inacessíveis para a família.", correta: true }
     ],
     feedback: "Por questões de privacidade e termos de uso, as empresas não entregam senhas a familiares sem autorização prévia, o que pode trancar lembranças e registros importantes."
   },
