@@ -65,7 +65,7 @@
       pergunta: "O que forma o legado digital de alguém?",
       imagem: "img/image 2.png",
       alternativas: [
-        { id: "A", texto: "O conjunto de fotos, vídeos, mensagens, contas e arquivos acumulados online ao longo da vida.", correta: true },
+        { id: "A", texto: "O conjunto de fotos, vídeos, mensagens, contas e arquivos acumulados online ao longo da vida e destinados a terceiros no futuro.", correta: true },
         { id: "B", texto: "Os aparelhos eletrônicos físicos, como celulares e notebooks, deixados pela pessoa.", correta: false },
         { id: "C", texto: "Os bens que possuem valor financeiro direto, como saldos digitais e criptomoedas.", correta: false }
       ],
@@ -133,7 +133,7 @@
       imagem: "img/01 fantasmas.jpg",
       alternativas: [
         { id: "A", texto: "Deixar todas as redes sociais abertas sem senha no aparelho principal.", correta: false },
-        { id: "B", texto: "Configurar ferramentas de legado nas plataformas e deixar orientações claras a alguém de confiança.", correta: true },
+        { id: "B", texto: "Configurar ferramentas de legado nas plataformas e/ou deixar orientações claras a alguém de confiança.", correta: true },
         { id: "C", texto: "Confiar que os provedores de e-mail entrarão em contato com seus familiares.", correta: false }
       ],
       feedback: "As plataformas não sabem o que aconteceu com o usuário a menos que sejam avisadas ou que você já tenha configurado um contato de confiança previamente."
