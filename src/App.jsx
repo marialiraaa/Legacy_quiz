@@ -175,7 +175,10 @@ export function App() {
             nickname,
             assinaturaUrl,
             pontuacao: score,
-            tempoSegundos
+            tempoSegundos,
+            faixaEtaria: consentRecord?.ageGroup || null,
+            maiorDeIdade:
+              typeof consentRecord?.isAdult === 'boolean' ? consentRecord.isAdult : null
           });
           setSaveStatus({ loading: false, success: true, error: null });
         } catch (err) {

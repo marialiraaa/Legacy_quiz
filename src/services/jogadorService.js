@@ -91,7 +91,14 @@ export async function uploadAssinatura(signatureData, formattedNickname) {
  * @param {number} params.tempoSegundos - Tempo total decorrido em segundos (> 0)
  * @returns {Promise<{ id: string, message: string }>}
  */
-export async function salvarJogador({ nickname, assinaturaUrl, pontuacao, tempoSegundos }) {
+export async function salvarJogador({
+  nickname,
+  assinaturaUrl,
+  pontuacao,
+  tempoSegundos,
+  faixaEtaria = null,
+  maiorDeIdade = null
+}) {
   const idDocumento = formatNickname(nickname);
 
   // Validação dos tipos de dados exigidos pelas Security Rules
@@ -126,23 +133,49 @@ export async function salvarJogador({ nickname, assinaturaUrl, pontuacao, tempoS
     // Caso contrário continua para tentar salvar via regra do Firestore
   }
 
-  // Prepara estritamente os campos autorizados pelas Security Rules
-  const payload = {
+  // Prepara os campos do documento do jogador
+  const basePayload = {
     nickname: nickname.trim(),
     assinaturaUrl,
     pontuacao: pontuacaoNum,
     tempoSegundos: tempoNum
   };
 
+  const extendedPayload =
+    faixaEtaria || typeof maiorDeIdade === "boolean"
+      ? {
+          ...basePayload,
+          ...(faixaEtaria ? { faixaEtaria } : {}),
+          ...(typeof maiorDeIdade === "boolean" ? { maiorDeIdade } : {})
+        }
+      : basePayload;
+
   try {
     // setDoc grava com o ID personalizado (o próprio nickname formatado)
-    await setDoc(docRef, payload);
+    await setDoc(docRef, extendedPayload);
     return {
       id: idDocumento,
       message: "Registro gravado com sucesso no ranking!"
     };
   } catch (error) {
-    // Se a regra de segurança bloquear por existência de ID (allow create: if !exists)
+    // Caso as Security Rules publicadas no Firebase ainda restrinjam estritamente às 4 chaves originais de 'jogadores',
+    // faz fallback transparente para basePayload (a faixa etária já fica gravada em 'sessoes_pesquisa.consentimento').
+    if (error.code === "permission-denied" && extendedPayload !== basePayload) {
+      try {
+        await setDoc(docRef, basePayload);
+        return {
+          id: idDocumento,
+          message: "Registro gravado com sucesso no ranking!"
+        };
+      } catch (retryError) {
+        if (retryError.code === "permission-denied") {
+          throw new Error(
+            `Não foi possível registrar: o nickname "${idDocumento}" já existe ou os campos enviados violaram as regras de segurança.`
+          );
+        }
+        throw retryError;
+      }
+    }
     if (error.code === "permission-denied") {
       throw new Error(
         `Não foi possível registrar: o nickname "${idDocumento}" já existe ou os campos enviados violaram as regras de segurança.`

@@ -726,6 +726,106 @@ body::after {
   flex: 1;
 }
 
+/* === AGE GROUP SELECTION CARDS (MAIOR / MENOR DE IDADE) === */
+.tcle-age-step-box {
+  background: #f8fafc;
+  border: 2px solid #cbd5e1;
+}
+
+.tcle-age-helper {
+  font-size: 0.92rem;
+  color: #475569;
+  margin: 0 0 12px 0;
+  line-height: 1.45;
+}
+
+.tcle-age-options-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+}
+
+@media (max-width: 600px) {
+  .tcle-age-options-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+}
+
+.tcle-age-option-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 14px 18px;
+  border-radius: 16px;
+  border: 2px solid #cbd5e1;
+  background: #ffffff;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(30, 41, 82, 0.04);
+}
+
+.tcle-age-option-card:hover {
+  border-color: #1e2952;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 14px rgba(30, 41, 82, 0.08);
+}
+
+.tcle-age-option-card.selected {
+  border-color: #16a34a;
+  background: #f0fdf4;
+  box-shadow: 0 6px 16px rgba(22, 163, 74, 0.14);
+}
+
+.tcle-age-option-top {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.tcle-age-icon {
+  font-size: 1.6rem;
+  line-height: 1;
+}
+
+.tcle-age-radio-indicator {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid #94a3b8;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: #ffffff;
+  background: #ffffff;
+  transition: all 0.2s ease;
+}
+
+.tcle-age-option-card.selected .tcle-age-radio-indicator {
+  border-color: #16a34a;
+  background: #16a34a;
+}
+
+.tcle-age-option-title {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #1e2952;
+  margin-bottom: 2px;
+}
+
+.tcle-age-option-sub {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #475569;
+}
+
 .tcle-scroll-badge {
   font-size: 0.82rem;
   font-weight: 700;

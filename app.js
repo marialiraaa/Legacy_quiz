@@ -688,6 +688,7 @@
   }
 
   function NicknameScreen({ onConfirm, onBack, sound }) {
+    const [ageGroup, setAgeGroup] = useState('');
     const [scrolledEnd, setScrolledEnd] = useState(false);
     const [scrollPct, setScrollPct] = useState(0);
     const [consentChecked, setConsentChecked] = useState(false);
@@ -795,11 +796,22 @@
       if (pct >= 90 && !scrolledEnd) setScrolledEnd(true);
     };
 
-    const isUnlocked = scrolledEnd && consentChecked && hasSignature;
+    const hasSelectedAge = ageGroup === 'maior_idade' || ageGroup === 'menor_idade';
+    const ageGroupLabel =
+      ageGroup === 'maior_idade'
+        ? 'Maior de idade (18 anos ou mais)'
+        : ageGroup === 'menor_idade'
+          ? 'Menor de idade (menos de 18 anos)'
+          : '';
+    const isUnlocked = hasSelectedAge && scrolledEnd && consentChecked && hasSignature;
     const isValid = isUnlocked && nickname.trim().length > 0;
 
     const onSubmit = (e) => {
       e.preventDefault();
+      if (!hasSelectedAge) {
+        setErr('Por favor, informe se você é maior ou menor de idade antes de prosseguir.');
+        return;
+      }
       if (!isUnlocked) {
         setErr('Cumpra as etapas de leitura, concordância e assinatura antes de continuar.');
         return;
@@ -818,6 +830,9 @@
       const consentPayload = {
         acceptedAt: new Date().toISOString(),
         caae: '94717525.4.0000.5690',
+        ageGroup,
+        isAdult: ageGroup === 'maior_idade',
+        ageGroupLabel,
         signatureDataUrl: sigDataUrl
       };
       onConfirm(nickname.trim(), consentPayload);
@@ -851,6 +866,50 @@
             h('span', { className: 'tcle-highlight-icon' }, item.icon),
             h('div', null, h('strong', null, `${item.t}: `), item.d)
           ))
+        ),
+
+        // Age Group Selection
+        h('div', { className: 'tcle-step-box tcle-age-step-box' },
+          h('div', { className: 'tcle-step-header' },
+            h('span', { className: 'tcle-step-number' }, 'Perfil Etário'),
+            h('span', { className: 'tcle-step-title' }, 'Você é maior ou menor de idade?'),
+            h('span', { className: `tcle-scroll-badge ${hasSelectedAge ? 'done' : 'pending'}` },
+              hasSelectedAge ? '✓ Selecionado' : 'Obrigatório'
+            )
+          ),
+          h('p', { className: 'tcle-age-helper' },
+            'Selecione abaixo a sua faixa etária para registrar adequadamente o seu termo de participação na pesquisa:'
+          ),
+          h('div', { className: 'tcle-age-options-grid', role: 'radiogroup', 'aria-label': 'Seleção de faixa etária' },
+            h('button', {
+              type: 'button',
+              role: 'radio',
+              'aria-checked': ageGroup === 'maior_idade',
+              className: `tcle-age-option-card ${ageGroup === 'maior_idade' ? 'selected' : ''}`,
+              onClick: () => { sound.playClick(); setAgeGroup('maior_idade'); if (err) setErr(''); }
+            },
+              h('div', { className: 'tcle-age-option-top' },
+                h('span', { className: 'tcle-age-icon' }, '🧑'),
+                h('span', { className: 'tcle-age-radio-indicator' }, ageGroup === 'maior_idade' ? '✓' : '')
+              ),
+              h('div', { className: 'tcle-age-option-title' }, 'Sou Maior de Idade'),
+              h('div', { className: 'tcle-age-option-sub' }, 'Tenho 18 anos ou mais (TCLE)')
+            ),
+            h('button', {
+              type: 'button',
+              role: 'radio',
+              'aria-checked': ageGroup === 'menor_idade',
+              className: `tcle-age-option-card ${ageGroup === 'menor_idade' ? 'selected' : ''}`,
+              onClick: () => { sound.playClick(); setAgeGroup('menor_idade'); if (err) setErr(''); }
+            },
+              h('div', { className: 'tcle-age-option-top' },
+                h('span', { className: 'tcle-age-icon' }, '🌱'),
+                h('span', { className: 'tcle-age-radio-indicator' }, ageGroup === 'menor_idade' ? '✓' : '')
+              ),
+              h('div', { className: 'tcle-age-option-title' }, 'Sou Menor de Idade'),
+              h('div', { className: 'tcle-age-option-sub' }, 'Tenho menos de 18 anos (TALE / Assentimento)')
+            )
+          )
         ),
 
         // STEP 1: Reader
@@ -990,8 +1049,11 @@
             h('label', { className: 'modal-label' }, 'Nickname escolhido:'),
             h('div', { className: 'modal-input-display' }, nickname.trim()),
             h('div', {
-              style: { marginTop: 12, fontSize: '0.88rem', color: '#166534', background: '#dcfce7', padding: '10px 14px', borderRadius: 12, fontWeight: 600 }
-            }, '✓ TCLE assinado digitalmente e registrado nesta sessão.'),
+              style: { marginTop: 10, fontSize: '0.9rem', color: '#1e2952', background: '#eff6ff', border: '1px solid #bfdbfe', padding: '10px 14px', borderRadius: 12, fontWeight: 700 }
+            }, `👤 Perfil informado: ${ageGroupLabel}`),
+            h('div', {
+              style: { marginTop: 8, fontSize: '0.88rem', color: '#166534', background: '#dcfce7', padding: '10px 14px', borderRadius: 12, fontWeight: 600 }
+            }, '✓ Termo assinado digitalmente e registrado nesta sessão.'),
             h('div', { className: 'modal-actions', style: { marginTop: 18 } },
               h('button', {
                 type: 'button',

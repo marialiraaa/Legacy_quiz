@@ -4,6 +4,7 @@ import { SignatureCanvas } from './SignatureCanvas.jsx';
 
 export function NicknameScreen({ onConfirmNickname, onBack, playClick }) {
   // Validation Gates State
+  const [ageGroup, setAgeGroup] = useState(''); // 'maior_idade' | 'menor_idade'
   const [hasScrolledToBottom, setHasScrolledToBottom] = useState(false);
   const [scrollProgress, setScrollProgress] = useState(0);
   const [hasAcceptedConsent, setHasAcceptedConsent] = useState(false);
@@ -46,8 +47,16 @@ export function NicknameScreen({ onConfirmNickname, onBack, playClick }) {
     handleScroll();
   }, [handleScroll]);
 
-  // Master validation: All 3 requirements must be satisfied to unlock Nickname & Start
-  const isTCLEComplete = hasScrolledToBottom && hasAcceptedConsent && signatureInfo.hasSignature;
+  // Master validation: Age group + all 3 TCLE requirements must be satisfied to unlock Nickname & Start
+  const hasSelectedAgeGroup = ageGroup === 'maior_idade' || ageGroup === 'menor_idade';
+  const ageGroupLabel =
+    ageGroup === 'maior_idade'
+      ? 'Maior de idade (18 anos ou mais)'
+      : ageGroup === 'menor_idade'
+        ? 'Menor de idade (menos de 18 anos)'
+        : '';
+  const isTCLEComplete =
+    hasSelectedAgeGroup && hasScrolledToBottom && hasAcceptedConsent && signatureInfo.hasSignature;
   const isFormValid = isTCLEComplete && nicknameInput.trim().length > 0;
 
   const handleSignatureChange = (sigData) => {
@@ -56,6 +65,10 @@ export function NicknameScreen({ onConfirmNickname, onBack, playClick }) {
 
   const handleInitialSubmit = (e) => {
     e.preventDefault();
+    if (!hasSelectedAgeGroup) {
+      setErrorMsg('Por favor, informe se você é maior ou menor de idade antes de prosseguir.');
+      return;
+    }
     if (!isTCLEComplete) {
       setErrorMsg('Por favor, cumpra todas as etapas do termo e assinatura antes de prosseguir.');
       return;
@@ -75,6 +88,9 @@ export function NicknameScreen({ onConfirmNickname, onBack, playClick }) {
     const consentPayload = {
       acceptedAt: new Date().toISOString(),
       caae: TCLE_DATA.header.caae,
+      ageGroup,
+      isAdult: ageGroup === 'maior_idade',
+      ageGroupLabel,
       signatureDataUrl: signatureInfo.dataUrl,
       agreedText: TCLE_DATA.consentDeclaration
     };
@@ -118,6 +134,63 @@ export function NicknameScreen({ onConfirmNickname, onBack, playClick }) {
               </div>
             </div>
           ))}
+        </div>
+
+        {/* AGE GROUP SELECTION: Maior ou Menor de Idade */}
+        <div className="tcle-step-box tcle-age-step-box">
+          <div className="tcle-step-header">
+            <span className="tcle-step-number">Perfil Etário</span>
+            <span className="tcle-step-title">Você é maior ou menor de idade?</span>
+            <span className={`tcle-scroll-badge ${hasSelectedAgeGroup ? 'done' : 'pending'}`}>
+              {hasSelectedAgeGroup ? '✓ Selecionado' : 'Obrigatório'}
+            </span>
+          </div>
+          <p className="tcle-age-helper">
+            Selecione abaixo a sua faixa etária para registrar adequadamente o seu termo de participação na pesquisa:
+          </p>
+          <div className="tcle-age-options-grid" role="radiogroup" aria-label="Seleção de faixa etária">
+            <button
+              type="button"
+              role="radio"
+              aria-checked={ageGroup === 'maior_idade'}
+              className={`tcle-age-option-card ${ageGroup === 'maior_idade' ? 'selected' : ''}`}
+              onClick={() => {
+                playClick?.();
+                setAgeGroup('maior_idade');
+                if (errorMsg) setErrorMsg('');
+              }}
+            >
+              <div className="tcle-age-option-top">
+                <span className="tcle-age-icon">🧑</span>
+                <span className="tcle-age-radio-indicator">
+                  {ageGroup === 'maior_idade' ? '✓' : ''}
+                </span>
+              </div>
+              <div className="tcle-age-option-title">Sou Maior de Idade</div>
+              <div className="tcle-age-option-sub">Tenho 18 anos ou mais (TCLE)</div>
+            </button>
+
+            <button
+              type="button"
+              role="radio"
+              aria-checked={ageGroup === 'menor_idade'}
+              className={`tcle-age-option-card ${ageGroup === 'menor_idade' ? 'selected' : ''}`}
+              onClick={() => {
+                playClick?.();
+                setAgeGroup('menor_idade');
+                if (errorMsg) setErrorMsg('');
+              }}
+            >
+              <div className="tcle-age-option-top">
+                <span className="tcle-age-icon">🌱</span>
+                <span className="tcle-age-radio-indicator">
+                  {ageGroup === 'menor_idade' ? '✓' : ''}
+                </span>
+              </div>
+              <div className="tcle-age-option-title">Sou Menor de Idade</div>
+              <div className="tcle-age-option-sub">Tenho menos de 18 anos (TALE / Assentimento)</div>
+            </button>
+          </div>
         </div>
 
         {/* STEP 1: Scrollable Complete TCLE Document */}
@@ -197,8 +270,8 @@ export function NicknameScreen({ onConfirmNickname, onBack, playClick }) {
               <h3 className="id-title">Identificação do Jogador</h3>
               <p className="id-description">
                 {isTCLEComplete
-                  ? 'Consentimento aceito com sucesso! Agora escolha o seu apelido de jogador para iniciar o quiz.'
-                  : 'Cumpra as 3 etapas do TCLE acima para desbloquear este campo e iniciar o jogo.'}
+                  ? `Consentimento aceito (${ageGroupLabel})! Agora escolha o seu apelido de jogador para iniciar o quiz.`
+                  : 'Informe se você é maior ou menor de idade e cumpra as 3 etapas do termo acima para desbloquear este campo.'}
               </p>
             </div>
           </div>
@@ -248,8 +321,12 @@ export function NicknameScreen({ onConfirmNickname, onBack, playClick }) {
                 {nicknameInput.trim()}
               </div>
 
-              <div style={{ marginTop: '12px', fontSize: '0.88rem', color: '#166534', background: '#dcfce7', padding: '10px 14px', borderRadius: '12px', fontWeight: 600 }}>
-                ✓ TCLE assinado digitalmente e registrado nesta sessão.
+              <div style={{ marginTop: '10px', fontSize: '0.9rem', color: '#1e2952', background: '#eff6ff', border: '1px solid #bfdbfe', padding: '10px 14px', borderRadius: '12px', fontWeight: 700 }}>
+                👤 Perfil informado: {ageGroupLabel}
+              </div>
+
+              <div style={{ marginTop: '8px', fontSize: '0.88rem', color: '#166534', background: '#dcfce7', padding: '10px 14px', borderRadius: '12px', fontWeight: 600 }}>
+                ✓ Termo assinado digitalmente e registrado nesta sessão.
               </div>
 
               <div className="modal-actions" style={{ marginTop: '18px' }}>

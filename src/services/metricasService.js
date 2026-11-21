@@ -320,16 +320,45 @@ export function construirPayloadSessao({
     }
   }
 
+  const faixaEtaria =
+    consentRecord?.ageGroup ||
+    consentRecord?.faixaEtaria ||
+    null;
+  const maiorDeIdade =
+    typeof consentRecord?.isAdult === "boolean"
+      ? consentRecord.isAdult
+      : typeof consentRecord?.maiorDeIdade === "boolean"
+        ? consentRecord.maiorDeIdade
+        : faixaEtaria === "maior_idade"
+          ? true
+          : faixaEtaria === "menor_idade"
+            ? false
+            : null;
+  const faixaEtariaLabel =
+    consentRecord?.ageGroupLabel ||
+    consentRecord?.faixaEtariaLabel ||
+    (faixaEtaria === "maior_idade"
+      ? "Maior de idade (18 anos ou mais)"
+      : faixaEtaria === "menor_idade"
+        ? "Menor de idade (menos de 18 anos)"
+        : null);
+
   const consentimento = consentRecord
     ? {
       aceito: true,
       caae: consentRecord.caae || "94717525.4.0000.5690",
-      aceitoEm: consentRecord.acceptedAt || timestamps.tcleAceitoEm || null
+      aceitoEm: consentRecord.acceptedAt || timestamps.tcleAceitoEm || null,
+      faixaEtaria,
+      faixaEtariaLabel,
+      maiorDeIdade
     }
     : {
       aceito: false,
       caae: "94717525.4.0000.5690",
-      aceitoEm: null
+      aceitoEm: null,
+      faixaEtaria: null,
+      faixaEtariaLabel: null,
+      maiorDeIdade: null
     };
 
   const desistencia = dropoutData
@@ -957,6 +986,8 @@ export function exportarSessoesCSV(sessoes = [], { anonimizarNickname = true } =
     "ID_Sessao",
     "Status",
     "Participante",
+    "Faixa_Etaria",
+    "Maior_De_Idade",
     "TCLE_Aceito",
     "Data_Inicio",
     "Data_Fim",
@@ -1002,10 +1033,30 @@ export function exportarSessoesCSV(sessoes = [], { anonimizarNickname = true } =
         ? `${s.respostasBonus?.bonus_2?.emotionScore ?? s.respostasQuiz?.["14"]?.emotionScore} (${s.respostasBonus?.bonus_2?.emotionLabel || s.respostasQuiz?.["14"]?.emotionLabel})`
         : "";
 
+    const faixaEtariaTexto =
+      s.consentimento?.faixaEtariaLabel ||
+      (s.consentimento?.faixaEtaria === "maior_idade"
+        ? "Maior de idade (18 anos ou mais)"
+        : s.consentimento?.faixaEtaria === "menor_idade"
+          ? "Menor de idade (menos de 18 anos)"
+          : "Nao informado");
+    const maiorDeIdadeTexto =
+      typeof s.consentimento?.maiorDeIdade === "boolean"
+        ? s.consentimento.maiorDeIdade
+          ? "Sim"
+          : "Nao"
+        : s.consentimento?.faixaEtaria === "maior_idade"
+          ? "Sim"
+          : s.consentimento?.faixaEtaria === "menor_idade"
+            ? "Nao"
+            : "";
+
     return [
       s.sessionId || s.id,
       s.status,
       participanteLabel,
+      faixaEtariaTexto,
+      maiorDeIdadeTexto,
       s.consentimento?.aceito ? "Sim" : "Nao",
       s.timestamps?.sessaoIniciadaEm || "",
       s.sessaoFinalizadaEm || s.timestamps?.sessaoFinalizadaEm || "",
@@ -1129,6 +1180,7 @@ export function exportarPlanilhaExcel(sessoes = [], analitico, { anonimizarNickn
     "ID Sessão",
     "Status",
     "Participante",
+    "Faixa Etária",
     "TCLE Aceito",
     "Data Início",
     "Data Fim",
@@ -1163,10 +1215,19 @@ export function exportarPlanilhaExcel(sessoes = [], analitico, { anonimizarNickn
         ? `${s.respostasBonus?.bonus_2?.emotionScore ?? s.respostasQuiz?.["14"]?.emotionScore} (${s.respostasBonus?.bonus_2?.emotionLabel || s.respostasQuiz?.["14"]?.emotionLabel})`
         : "";
 
+    const faixaEtariaExcel =
+      s.consentimento?.faixaEtariaLabel ||
+      (s.consentimento?.faixaEtaria === "maior_idade"
+        ? "Maior de idade (18+)"
+        : s.consentimento?.faixaEtaria === "menor_idade"
+          ? "Menor de idade (<18)"
+          : "Não informado");
+
     return [
       s.sessionId || s.id,
       s.status,
       anonimizarNickname ? `Participante_${String(idx + 1).padStart(3, "0")}` : s.nickname || "Anônimo",
+      faixaEtariaExcel,
       s.consentimento?.aceito ? "Sim" : "Não",
       s.timestamps?.sessaoIniciadaEm || "",
       s.sessaoFinalizadaEm || "",

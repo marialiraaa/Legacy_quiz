@@ -1325,6 +1325,7 @@ export function AdminDashboard({ onExitAdmin }) {
                             <th>ID da Sessão</th>
                             <th>Status</th>
                             <th>Participante</th>
+                            <th>Faixa Etária</th>
                             <th>Data/Hora Final</th>
                             <th>Duração</th>
                             <th>Progresso</th>
@@ -1345,6 +1346,15 @@ export function AdminDashboard({ onExitAdmin }) {
                             const totalQ = s.desempenho?.totalQuestoes ?? 24;
                             const pct = s.desempenho?.percentualAcerto ?? 0;
 
+                            const faixaEtariaBadge =
+                              s.consentimento?.faixaEtaria === "maior_idade" ||
+                              s.consentimento?.maiorDeIdade === true
+                                ? "🧑 Maior (18+)"
+                                : s.consentimento?.faixaEtaria === "menor_idade" ||
+                                    s.consentimento?.maiorDeIdade === false
+                                  ? "🌱 Menor (<18)"
+                                  : "—";
+
                             return (
                               <tr key={s.sessionId || s.id}>
                                 <td>
@@ -1362,6 +1372,7 @@ export function AdminDashboard({ onExitAdmin }) {
                                   </span>
                                 </td>
                                 <td style={{ fontWeight: 600 }}>{nomeExibido}</td>
+                                <td>{faixaEtariaBadge}</td>
                                 <td>{formatarDataHora(s.sessaoFinalizadaEm)}</td>
                                 <td>{formatarDuracao(s.tempos?.duracaoTotalSegundos)}</td>
                                 <td>
@@ -1543,6 +1554,15 @@ export function AdminDashboard({ onExitAdmin }) {
                 <div>
                   <strong>TCLE Aceito:</strong>{" "}
                   {sessaoInspecionada.consentimento?.aceito ? "Sim" : "Não"}
+                </div>
+                <div>
+                  <strong>Faixa Etária:</strong>{" "}
+                  {sessaoInspecionada.consentimento?.faixaEtariaLabel ||
+                    (sessaoInspecionada.consentimento?.faixaEtaria === "maior_idade"
+                      ? "Maior de idade (18 anos ou mais)"
+                      : sessaoInspecionada.consentimento?.faixaEtaria === "menor_idade"
+                        ? "Menor de idade (menos de 18 anos)"
+                        : "Não informado")}
                 </div>
               </div>
 
