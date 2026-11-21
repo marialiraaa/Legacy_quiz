@@ -246,6 +246,15 @@ export const quizQuestions = [
   }
 ];
 
+// Escala de 5 níveis do Termômetro Emocional (Face Scale / CSAT adaptado)
+export const EMOTION_SCALE = [
+  { score: 5, emoji: "😄", label: "Tranquilo", color: "#15803d", bg: "#dcfce7" },
+  { score: 4, emoji: "🤔", label: "Curioso", color: "#16a34a", bg: "#f0fdf4" },
+  { score: 3, emoji: "😐", label: "Neutro", color: "#ca8a04", bg: "#fef9c3" },
+  { score: 2, emoji: "😟", label: "Preocupado", color: "#ea580c", bg: "#ffedd5" },
+  { score: 1, emoji: "😰", label: "Desconfortável", color: "#dc2626", bg: "#fee2e2" }
+];
+
 // Exporta QUIZ_QUESTIONS normalizado para compatibilidade com todos os módulos do sistema
 export const QUIZ_QUESTIONS = quizQuestions.map((q) => {
   const categoryKey = CATEGORY_NAME_TO_KEY[q.categoria] || "BLOCO_A";

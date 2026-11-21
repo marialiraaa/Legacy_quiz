@@ -2067,6 +2067,101 @@ body::after {
   margin: 0;
 }
 
+/* 3.5. Termômetro Emocional (Face Scale / CSAT de 5 Níveis) */
+.emotion-thermometer-box {
+  width: 100%;
+  background: #ffffff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 6px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  box-shadow: 0 3px 10px rgba(15, 23, 42, 0.04);
+}
+
+.emotion-thermometer-title {
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: #1e2952;
+  text-align: center;
+  letter-spacing: 0.01em;
+}
+
+.emotion-thermometer-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+}
+
+.emotion-face-btn {
+  flex: 1;
+  min-width: 0;
+  background: #f8fafc;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 11px;
+  padding: 4px 2px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  cursor: pointer;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 0.2s ease,
+    background-color 0.2s ease,
+    opacity 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.emotion-face-btn:hover {
+  border-color: var(--emotion-color, #2563eb);
+  background: var(--emotion-bg, #eff6ff);
+}
+
+.emotion-face-btn.selected {
+  transform: scale(1.16);
+  background: var(--emotion-bg, #eff6ff);
+  border: 2px solid var(--emotion-color, #2563eb);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.12);
+  z-index: 2;
+}
+
+.emotion-face-btn.dimmed {
+  opacity: 0.45;
+  transform: scale(0.95);
+}
+
+.emotion-face-emoji {
+  font-size: 1.25rem;
+  line-height: 1.05;
+}
+
+.emotion-face-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #334155;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.emotion-face-btn.selected .emotion-face-label {
+  color: var(--emotion-color, #1e2952);
+  font-weight: 800;
+}
+
+.btn-next-question:disabled {
+  background: #cbd5e1;
+  color: #64748b;
+  box-shadow: none;
+  cursor: not-allowed;
+  transform: none;
+}
+
 /* 4. Barra de Ação Fixa/Visível (Confirmar Resposta / Próxima Pergunta) */
 .gamified-action-bar {
   display: flex;
@@ -2304,6 +2399,63 @@ body::after {
   .gamified-question-stage.is-confirmed-stage .gamified-illustration-img {
     max-height: 7.5vh;
     max-height: 7.5dvh;
+  }
+
+  /* Compactação automática quando o Termômetro Emocional também está aberto no mobile */
+  .gamified-question-stage.has-emotion-open {
+    gap: 5px;
+  }
+
+  .gamified-question-stage.has-emotion-open .gamified-illustration-img {
+    max-height: 5.8vh;
+    max-height: 5.8dvh;
+  }
+
+  .gamified-question-stage.has-emotion-open .options-row {
+    gap: 5px;
+  }
+
+  .gamified-question-stage.has-emotion-open .option-card {
+    padding: 7px 10px;
+  }
+
+  .gamified-question-stage.has-emotion-open .option-badge {
+    width: 28px;
+    height: 28px;
+    font-size: 0.85rem;
+  }
+
+  .gamified-question-stage.has-emotion-open .option-text {
+    font-size: clamp(0.8rem, 1.72dvh, 0.88rem);
+    line-height: 1.24;
+  }
+
+  .gamified-question-stage.has-emotion-open .gamified-feedback-balloon {
+    padding: 6px 10px;
+  }
+
+  .emotion-thermometer-box {
+    padding: 5px 8px;
+    gap: 3px;
+    max-height: 65px;
+    flex-shrink: 0;
+  }
+
+  .emotion-thermometer-title {
+    font-size: 0.72rem;
+  }
+
+  .emotion-face-btn {
+    padding: 3px 2px;
+    border-radius: 9px;
+  }
+
+  .emotion-face-emoji {
+    font-size: 1.08rem;
+  }
+
+  .emotion-face-label {
+    font-size: 0.62rem;
   }
 
   /* 4. Alternativas (A, B, C) com Cards e Fontes Bem Ajustados */
