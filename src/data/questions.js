@@ -150,7 +150,7 @@ export const quizQuestions = [
     tipo: "conhecimento",
     categoria: "Bloco B: Privacidade e Memória",
     pergunta: "Qual é a finalidade de uma mensagem póstuma digital?",
-    imagem: "img/ceudex 1.png",
+    imagem: "img/novasorações.png",
     alternativas: [
       { id: "A", texto: "Transferir automaticamente a titularidade bancária para outra pessoa.", correta: false },
       { id: "B", texto: "Manter o perfil ativo respondendo mensagens como se o usuário estivesse online.", correta: false },
@@ -168,9 +168,9 @@ export const quizQuestions = [
     pergunta: "O que acontece com um perfil no Facebook ou Instagram após o falecimento do usuário?",
     imagem: "img/MemorialDigital2.png",
     alternativas: [
-      { id: "A", texto: "Pode ser transformado em memorial (com a tag 'Em memória') ou excluído mediante solicitação.", correta: true },
-      { id: "B", texto: "Continua aparecendo normalmente nas sugestões de amizade e lembretes de aniversário.", correta: false },
-      { id: "C", texto: "É bloqueado permanentemente sem possibilidade de exclusão pela família.", correta: false }
+      { id: "A", texto: "O Facebook permite transformar o perfil em memorial ou solicitar a exclusão da conta, enquanto o Instagram também oferece a opção de transformar o perfil em memorial.", correta: true },
+      { id: "B", texto: "Ambas as redes continuam exibindo o perfil em sugestões e lembretes de aniversário.", correta: false },
+      { id: "C", texto: "As contas são bloqueadas permanentemente sem opção de memorial ou pedido familiar.", correta: false }
     ],
     feedback: "A Meta permite transformar contas em memoriais (congelando o perfil para homenagens) ou removê-las permanentemente quando familiares enviam a documentação necessária."
   },
@@ -178,12 +178,24 @@ export const quizQuestions = [
     id: 10,
     tipo: "conhecimento",
     categoria: "Bloco C: Plataformas na Prática",
-    pergunta: "O que permite a ferramenta 'Gerenciador de Contas Inativas' do Google?",
-    imagem: "img/Lapide Twitter.png",
+    pergunta: "Qual é a principal finalidade do 'Gerenciador de Contas Inativas' oferecido pelo Google?",
+    imagem: "img/ceudex 1.png",
     alternativas: [
-      { id: "A", texto: "Aumentar gratuitamente o espaço de armazenamento do Google Drive e do Gmail.", correta: false },
-      { id: "B", texto: "Escolher quem receberá acesso a dados (como Fotos e Drive) ou mandar apagar tudo após um tempo sem uso.", correta: true },
-      { id: "C", texto: "Compartilhar sua senha em tempo real com até dez contatos de emergência.", correta: false }
+      {
+        id: "A",
+        texto: "Transferir automaticamente o histórico de pesquisas e senhas salvas para uma nova conta principal após 30 dias sem login.",
+        correta: false
+      },
+      {
+        id: "B",
+        texto: "Definir contatos de confiança para receberem acesso a dados específicos (como Fotos e Drive) ou programar a exclusão da conta após um período de inatividade.",
+        correta: true
+      },
+      {
+        id: "C",
+        texto: "Gerar chaves de recuperação de dois fatores para que familiares possam redefinir a senha e assumir o controle total do perfil.",
+        correta: false
+      }
     ],
     feedback: "Pouca gente conhece, mas o Google tem essa função nativa! Você define um prazo (ex: 3 meses sem login) e decide se quer avisar contatos de confiança ou excluir a conta."
   },
